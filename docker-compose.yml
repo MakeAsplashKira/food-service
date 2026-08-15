@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: "food_service"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123"
+    ports:
+      - "5432:5432"
