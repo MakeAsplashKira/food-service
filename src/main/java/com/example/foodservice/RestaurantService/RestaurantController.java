@@ -68,4 +68,8 @@ public class RestaurantController {
 
         return rawApiKey.replace("Bearer ", "");
     }
+
+    private boolean isApiKeyExists(String rawApiKey) {
+        return rawApiKey == null || rawApiKey.isBlank() || !rawApiKey.startsWith("Bearer ");
+    }
 }
