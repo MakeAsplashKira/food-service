@@ -3,6 +3,7 @@ package com.example.foodservice.common;
 
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 
@@ -25,8 +26,12 @@ public class RequestMetrics {
 
         return new Stats(
           duration,
-          LocalDateTime.now()
+          Instant.now()
         );
+    }
+
+    public void finish() {
+        threadLocal.remove();
     }
 
     private static class Data {
@@ -35,6 +40,6 @@ public class RequestMetrics {
 
     public record Stats(
             long durationMs,
-            LocalDateTime timeStamp
+            Instant timestamp
     ) {}
 }

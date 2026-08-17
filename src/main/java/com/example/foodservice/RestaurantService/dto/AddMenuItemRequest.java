@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record AddMenuItemRequest(
+        @NotNull
+        Long providerMenuItemId,
+
         @NotBlank(message = "Name is required")
         String name,
 
@@ -13,6 +16,9 @@ public record AddMenuItemRequest(
         BigDecimal price,
 
         @NotBlank(message = "Category is required")
-        String category
+        String category,
+
+        @NotNull(message = "Quantity is required")
+        Integer availableQuantity
 ) {
 }

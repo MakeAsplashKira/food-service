@@ -25,14 +25,15 @@ public class UserController {
     @PostMapping
     public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
 
-        String token = userService.register(request);
+        String apiKey = userService.register(request);
 
-        return responseBuilder.created(new RegisterResponse(token));
+        return responseBuilder.created(new RegisterResponse(apiKey));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        return responseBuilder.ok(new LoginResponse(""));
+        String apiKey = userService.login(request);
+        return responseBuilder.ok(new LoginResponse(apiKey));
     }
 
 }

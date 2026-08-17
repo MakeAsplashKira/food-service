@@ -1,11 +1,11 @@
-package com.example.foodservice.RestaurantService.config;
+package com.example.foodservice.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
-public class SecurityConfig {
+public class BCryptEncoderConfig {
     private final static int BCRYPT_STRENGTH = 12;
 
     @Bean

@@ -14,8 +14,13 @@ public class UserServiceExceptionHandler {
     private final ResponseBuilder responseBuilder;
 
     @ExceptionHandler(NumberAlreadyTakenException.class)
-    public ResponseEntity<ApiResponse> handleNumberExist(NumberAlreadyTakenException e) {
+    public ResponseEntity<ApiResponse<Void>> handleNumberExist(NumberAlreadyTakenException e) {
         return responseBuilder.conflict(e.getMessage());
+    }
+
+    @ExceptionHandler(NoSuchUserException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoSuchUser(NoSuchUserException e) {
+        return responseBuilder.notFound(e.getMessage());
     }
 
 }

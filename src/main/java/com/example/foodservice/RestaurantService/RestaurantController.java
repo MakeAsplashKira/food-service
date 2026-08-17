@@ -2,6 +2,7 @@ package com.example.foodservice.RestaurantService;
 
 import com.example.foodservice.RestaurantService.dto.*;
 import com.example.foodservice.RestaurantService.entity.MenuItem;
+import com.example.foodservice.RestaurantService.dto.AddMenuItemResponse;
 import com.example.foodservice.common.exception.AuthRequiredException;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.ResponseBuilder;
@@ -41,13 +42,13 @@ public class RestaurantController {
                 menuItem.getId(),
                 menuItem.getRestaurant().getId(),
                 menuItem.getName(),
-                menuItem.getPrice(),
+                menuItem.getUnitPrice(),
                 menuItem.getCategory()
         ));
     }
 
     @DeleteMapping("/{restaurantId}/menu/{menuItemId}")
-    public ResponseEntity<ApiResponse> deleteMenuItem(HttpServletRequest rawRequest,
+    public ResponseEntity<ApiResponse<Void>> deleteMenuItem(HttpServletRequest rawRequest,
                                                          @PathVariable Long restaurantId,
                                                          @PathVariable Long menuItemId) {
         String apiKey = extractApiKey(rawRequest);
@@ -62,7 +63,7 @@ public class RestaurantController {
     private String extractApiKey(HttpServletRequest request) {
         String rawApiKey = request.getHeader("Authorization");
 
-        if(rawApiKey == null || rawApiKey.isBlank() || !rawApiKey.startsWith("Bearer ")) {
+        if(isApiKeyExists(rawApiKey)) {
             throw new AuthRequiredException("Api key is required");
         }
 

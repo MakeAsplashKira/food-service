@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public record AddMenuItemResponse(
    Long id,
-   Long restaurant_id,
+   Long restaurantId,
    String name,
    BigDecimal price,
    String category

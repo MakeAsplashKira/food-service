@@ -21,12 +21,26 @@ public class MenuItem {
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 
+    @Column(name = "provider_menu_item_id", nullable = false, unique = true)
+    private  Long providerMenuItemId;
+
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private BigDecimal price;
+    private BigDecimal unitPrice;
 
-    @Column
     private String category;
+
+    @Column(nullable = false)
+    private Integer availableQuantity;
+
+    public MenuItem(Long providerMenuItemId, String name, BigDecimal unitPrice, String category, Restaurant restaurant, Integer availableQuantity) {
+        this.providerMenuItemId = providerMenuItemId;
+        this.name = name;
+        this.unitPrice = unitPrice;
+        this.category = category;
+        this.restaurant = restaurant;
+        this.availableQuantity = availableQuantity;
+    }
 }
