@@ -1,13 +1,14 @@
 package com.example.foodservice.OrderService;
 
 
-import com.example.foodservice.common.dto.MenuItemResponse;
+import com.example.foodservice.common.dto.MenuItemInfo;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Entity
 @Table(name = "order_items")
@@ -20,7 +21,10 @@ public class OrderItem {
     Long id;
 
     @Column(nullable = false)
-    Long providerItemMenuId;
+    Long menuItemId;
+
+    @Column(nullable = false)
+    Long providerMenuItemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
@@ -38,13 +42,14 @@ public class OrderItem {
     @Column(nullable = false)
     Integer quantity;
 
-    public static OrderItem from(MenuItemResponse menuItemResponses) {
+    public static OrderItem from(MenuItemInfo menuItemResponses, Map<Long, Integer> quantityMap) {
         OrderItem orderItem = new OrderItem();
-        orderItem.setProviderItemMenuId(menuItemResponses.providerMenuItemId());
+        orderItem.setMenuItemId(menuItemResponses.id());
+        orderItem.setProviderMenuItemId(menuItemResponses.providerMenuItemId());
         orderItem.setName(menuItemResponses.name());
         orderItem.setUnitPrice(menuItemResponses.unitPrice());
         orderItem.setCategory(menuItemResponses.category());
-        orderItem.setQuantity(menuItemResponses.quantity());
+        orderItem.setQuantity(quantityMap.get(menuItemResponses.id()));
 
         return orderItem;
     }

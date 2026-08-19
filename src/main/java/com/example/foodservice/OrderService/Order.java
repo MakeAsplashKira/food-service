@@ -39,6 +39,23 @@ public class Order {
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
     OrderStatus status;
+
+    public Order(List<OrderItem> orderItems, Long restaurantId, Long userId, OrderStatus status) {
+        this.orderItems = orderItems;
+        this.restaurantId = restaurantId;
+        this.userId = userId;
+        this.status = status;
+    }
+
+    public static Order from(List<OrderItem> orderItems, Long restaurantId, Long userId, OrderStatus status) {
+        return new Order(
+                orderItems,
+                restaurantId,
+                userId,
+                status
+        );
+
+    }
 }
 
 

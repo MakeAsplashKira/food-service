@@ -1,6 +1,7 @@
 package com.example.foodservice.RestaurantService.exception;
 
 
+import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.exception.AuthRequiredException;
@@ -35,8 +36,13 @@ public class RestaurantServiceExceptionHandler {
         return responseBuilder.notFound(e.getMessage());
     }
 
-    @ExceptionHandler(DifferentRestaurantException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDifferentRestaurant(DifferentRestaurantException e) {
+    @ExceptionHandler(SomeMenuItemsMissingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSomeMenuItemsMissing(SomeMenuItemsMissingException e) {
         return responseBuilder.badRequest(e.getMessage());
+    }
+
+    @ExceptionHandler(NotEnoughMenuItemQuantityException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotEnoughMenuItemQuantity(NotEnoughMenuItemQuantityException e) {
+        return responseBuilder.conflict(e.getMessage());
     }
 }

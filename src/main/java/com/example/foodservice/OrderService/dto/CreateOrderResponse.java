@@ -10,12 +10,12 @@ public record CreateOrderResponse (
         Long userId,
         OrderStatus status
 ){
-    public static CreateOrderResponse from (Order order) {
+    public static CreateOrderResponse from (CreateOrderInfo order) {
         return new CreateOrderResponse(
-                order.getOrderItems().stream().map(OrderItemResponse::from).toList(),
-                order.getRestaurantId(),
-                order.getUserId(),
-                order.getStatus()
+                order.orderItems().stream().map(OrderItemResponse::from).toList(),
+                order.restaurantId(),
+                order.userId(),
+                order.status()
         );
     }
 }

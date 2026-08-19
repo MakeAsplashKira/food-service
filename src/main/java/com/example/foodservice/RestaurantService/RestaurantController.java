@@ -48,7 +48,7 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/{restaurantId}/menu/{menuItemId}")
-    public ResponseEntity<ApiResponse<Void>> deleteMenuItem(HttpServletRequest rawRequest,
+    public ResponseEntity<Void> deleteMenuItem(HttpServletRequest rawRequest,
                                                          @PathVariable Long restaurantId,
                                                          @PathVariable Long menuItemId) {
         String apiKey = extractApiKey(rawRequest);

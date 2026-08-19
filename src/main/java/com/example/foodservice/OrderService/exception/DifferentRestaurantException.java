@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.exception;
+package com.example.foodservice.OrderService.exception;
 
 public class DifferentRestaurantException extends RuntimeException {
     public DifferentRestaurantException() {

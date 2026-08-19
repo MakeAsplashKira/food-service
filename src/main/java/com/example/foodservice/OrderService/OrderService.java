@@ -1,13 +1,19 @@
 package com.example.foodservice.OrderService;
 
-import com.example.foodservice.OrderService.dto.CreateOrderResponse;
+import com.example.foodservice.OrderService.dto.CreateOrderCommand;
+import com.example.foodservice.OrderService.dto.CreateOrderInfo;
+import com.example.foodservice.OrderService.dto.OrderItemsRequest;
+import com.example.foodservice.OrderService.dto.OrderLine;
+import com.example.foodservice.OrderService.exception.DuplicateMenuItemException;
 import com.example.foodservice.RestaurantService.RestaurantService;
-import com.example.foodservice.common.dto.MenuItemResponse;
+import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
+import com.example.foodservice.common.dto.MenuItemInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -16,30 +22,65 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final RestaurantService restaurantService;
 
-    public CreateOrderResponse createOrder(Map<String, Integer> menuItemsIds) {
-        // Пока не уверен как с такой реализацией аутентифицировать пользователя, кроме как копирования методов из других сервисов, пока оставлю без проверки
+    private static final int MAX_RESTAURANTS_AVAILABLE_FOR_ORDER = 1;
 
-        List<MenuItemResponse> menuItems = restaurantService.getMenuItemsByIds(menuItemsIds); // здесь проверили что такие позиции существуют, у каждой  позиции один и тот же ресторан
-        // по поводу того что я использовал сервис, правильно ли я понимаю что в будущем будет типо restaurantClient и
-        // через него я буду получать данные, он будет обрабатывать ошибки и ловить сами http запросы и отдает дто просто уже готовую, либо кидает ошибку и я через @RestControllerADvice ее обрабатываю?
+
+    @Transactional
+    public CreateOrderInfo createOrder(CreateOrderCommand command) {
+        //1. Проверяем дубликаты
+       ensureItemsNotDuplicated(command.lines());
+
+        //2. Передаем во внешний сервис для получения MenuItem
+        List<MenuItemInfo> menuItems = restaurantService
+                .getMenuItemsByIds(extractIdsFromOrderItemsToList(command.lines()));
+
+        //3. Проверяем, все ли menuItems из одного ресторана
+        ensureAllItemsFromSameRestaurant(menuItems);
+
+        //4. теперь через сервис уменьшаем quantity
+        restaurantService.decreaseMenuItemQuantity(command.lines());
+
+        Map<Long, Integer> itemsQuantityMap = command.lines().stream()
+                .collect(Collectors.toMap(
+                        OrderLine::menuItemId,
+                        OrderLine::quantity
+                ));
 
         List<OrderItem> orderItems = menuItems
                 .stream()
-                .map(OrderItem::from)
-                .toList();
+                .map(menuItem -> OrderItem.from(menuItem, itemsQuantityMap))
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        Long restaurantId = menuItems.getFirst().restaurantId(); // не знаю насколько правильно решение так делать, ну ошибок вызвать оно не должно, я про в целом, отдавать id в каждом MenuItemResponse только для этого...
 
-        Order order = new Order();
-        order.setOrderItems(orderItems);
-        order.setRestaurantId(restaurantId);
-        order.setUserId(1L);
-        order.setStatus(OrderStatus.PENDING);
-
+        Long restaurantId = menuItems.getFirst().restaurantId();
+        Order order = Order.from(orderItems, restaurantId, command.userId(), OrderStatus.PENDING);
         orderItems.forEach(orderItem -> orderItem.setOrder(order));
 
         orderRepository.save(order);
 
-        return CreateOrderResponse.from(order);
+        return CreateOrderInfo.from(order);
     }
+
+    private List<Long> extractIdsFromOrderItemsToList(List<OrderLine> lines) {
+        return lines.stream().map(OrderLine::menuItemId).toList();
+    }
+
+    private void ensureAllItemsFromSameRestaurant(List<MenuItemInfo> menuItems) {
+        Set<Long> restaurantIds = new HashSet<>();
+        menuItems.forEach(menuItem -> restaurantIds.add(menuItem.restaurantId()));
+
+        if(restaurantIds.size() > MAX_RESTAURANTS_AVAILABLE_FOR_ORDER) {
+            throw new DifferentRestaurantException();
+        }
+    }
+
+    private void ensureItemsNotDuplicated(List<OrderLine> lines) {
+        HashMap<Long, Integer> uniqueItemsIds = new HashMap<>();
+        lines.forEach((line) -> uniqueItemsIds.put(line.menuItemId(), line.quantity()));
+        if(lines.size() != uniqueItemsIds.size()) {
+            throw new DuplicateMenuItemException();
+        }
+
+    }
+
 }

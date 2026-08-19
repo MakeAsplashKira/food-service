@@ -1,8 +1,10 @@
 package com.example.foodservice.OrderService;
 
 
+import com.example.foodservice.OrderService.dto.CreateOrderInfo;
 import com.example.foodservice.OrderService.dto.CreateOrderRequest;
 import com.example.foodservice.OrderService.dto.CreateOrderResponse;
+import com.example.foodservice.OrderService.dto.OrderItemsRequest;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -22,9 +24,10 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        CreateOrderResponse orderResponse = orderService.createOrder(request.items());
+        Long userId = 1L; //TODO: поменять на реальный id из principal
 
+        CreateOrderInfo orderInfo = orderService.createOrder(request.toCommand(userId));
 
-        return responseBuilder.created(orderResponse);
+        return responseBuilder.created(CreateOrderResponse.from(orderInfo));
     }
 }

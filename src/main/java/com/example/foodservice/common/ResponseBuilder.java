@@ -40,9 +40,8 @@ public class ResponseBuilder {
                 .body(build(FAILURE, NO_DATA, error));
     }
 
-    public ResponseEntity<ApiResponse<Void>> noContent() {
-        return ResponseEntity.status(HttpStatus.NO_CONTENT.value())
-                .body(build(SUCCESS, NO_DATA, NO_ERROR));
+    public ResponseEntity<Void> noContent() {
+        return ResponseEntity.status(HttpStatus.NO_CONTENT.value()).build();
     }
 
     public ResponseEntity<ApiResponse<Void>> badRequest(String error) {

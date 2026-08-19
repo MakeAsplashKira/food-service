@@ -4,16 +4,18 @@ import com.example.foodservice.RestaurantService.entity.MenuItem;
 
 import java.math.BigDecimal;
 
-public record MenuItemResponse(
+public record MenuItemInfo(
+        Long id,
         Long restaurantId,
         Long providerMenuItemId,
         String name,
         BigDecimal unitPrice,
         String category,
-        Integer quantity
+        Integer availableQuantity
 ) {
-    public static MenuItemResponse from(MenuItem menuItem) {
-        return new MenuItemResponse(
+    public static MenuItemInfo from(MenuItem menuItem) {
+        return new MenuItemInfo(
+                menuItem.getId(),
                 menuItem.getRestaurant().getId(),
                 menuItem.getProviderMenuItemId(),
                 menuItem.getName(),

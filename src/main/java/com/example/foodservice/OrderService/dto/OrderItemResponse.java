@@ -1,25 +1,26 @@
 package com.example.foodservice.OrderService.dto;
 
 import com.example.foodservice.OrderService.OrderItem;
-import jakarta.persistence.Column;
 
 import java.math.BigDecimal;
 
 public record OrderItemResponse(
         Long id,
+        Long menuItemId,
         String name,
         BigDecimal unitPrice,
         String category,
         Integer quantity
 )
 {
-    static OrderItemResponse from(OrderItem orderItem) {
+    static OrderItemResponse from(OrderItemInfo orderItem) {
         return new OrderItemResponse(
-                orderItem.getId(),
-                orderItem.getName(),
-                orderItem.getUnitPrice(),
-                orderItem.getCategory(),
-                orderItem.getQuantity()
+                orderItem.id(),
+                orderItem.menuItemId(),
+                orderItem.name(),
+                orderItem.unitPrice(),
+                orderItem.category(),
+                orderItem.quantity()
         );
     }
 }
