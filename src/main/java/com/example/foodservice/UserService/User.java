@@ -30,9 +30,6 @@ public class User {
     @Column
     String address;
 
-    @Column(name = "api_key", nullable = false, unique = true)
-    String apiKey;
-
     @CreationTimestamp
     @Column(name = "created_at")
     Instant createdAt;

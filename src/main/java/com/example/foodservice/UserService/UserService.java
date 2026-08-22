@@ -4,20 +4,18 @@ import com.example.foodservice.UserService.dto.LoginRequest;
 import com.example.foodservice.UserService.dto.RegisterRequest;
 import com.example.foodservice.UserService.exception.NoSuchUserException;
 import com.example.foodservice.UserService.exception.NumberAlreadyTakenException;
+import com.example.foodservice.common.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Transactional
     public String register(RegisterRequest request) {
@@ -25,15 +23,14 @@ public class UserService {
             throw new NumberAlreadyTakenException("Number already taken: " + request.phone());
         }
 
-       String apiKey = generateApiKey();
 
         User user = new User();
         user.setNumber(request.phone());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setApiKey(apiKey);
         userRepository.save(user);
 
-        return apiKey;
+
+        return jwtService.generateAccessToken(user.getId());
 
     }
 
@@ -47,18 +44,10 @@ public class UserService {
         }
 
 
-        return user.getApiKey();
+        return jwtService.generateAccessToken(user.id);
     }
 
 
-    private String generateApiKey() {
-        SecureRandom random = new SecureRandom();
-        byte[] bytes = new byte[32]; // 256 bit
-        random.nextBytes(bytes);
 
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(bytes);
-    }
 
 }
