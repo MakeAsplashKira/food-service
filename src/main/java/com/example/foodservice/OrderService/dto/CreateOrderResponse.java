@@ -1,21 +1,24 @@
 package com.example.foodservice.OrderService.dto;
 
-import com.example.foodservice.OrderService.Order;
 import com.example.foodservice.OrderService.OrderStatus;
+
+import java.time.Instant;
 import java.util.List;
 
 public record CreateOrderResponse (
+        Long id,
         List<OrderItemResponse> orderItems,
         Long restaurantId,
-        Long userId,
-        OrderStatus status
+        OrderStatus status,
+        Instant createdAt
 ){
     public static CreateOrderResponse from (CreateOrderInfo order) {
         return new CreateOrderResponse(
+                order.id(),
                 order.orderItems().stream().map(OrderItemResponse::from).toList(),
                 order.restaurantId(),
-                order.userId(),
-                order.status()
+                order.status(),
+                order.createdAt()
         );
     }
 }

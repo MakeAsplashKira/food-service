@@ -2,12 +2,11 @@ package com.example.foodservice.OrderService;
 
 import com.example.foodservice.OrderService.dto.CreateOrderCommand;
 import com.example.foodservice.OrderService.dto.CreateOrderInfo;
-import com.example.foodservice.OrderService.dto.OrderItemsRequest;
 import com.example.foodservice.OrderService.dto.OrderLine;
 import com.example.foodservice.OrderService.exception.DuplicateMenuItemException;
 import com.example.foodservice.RestaurantService.RestaurantService;
 import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
-import com.example.foodservice.common.dto.MenuItemInfo;
+import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,28 +26,25 @@ public class OrderService {
 
     @Transactional
     public CreateOrderInfo createOrder(CreateOrderCommand command) {
+        List<OrderLine> lines = command.lines();
+
         //1. Проверяем дубликаты
-       ensureItemsNotDuplicated(command.lines());
+        Map<Long, Integer> linesMap = quantitiesByMenuItemId(lines);
 
         //2. Передаем во внешний сервис для получения MenuItem
         List<MenuItemInfo> menuItems = restaurantService
-                .getMenuItemsByIds(extractIdsFromOrderItemsToList(command.lines()));
+                .getMenuItemsByIds(extractIdsFromOrderItemsToList(lines));
 
         //3. Проверяем, все ли menuItems из одного ресторана
         ensureAllItemsFromSameRestaurant(menuItems);
 
         //4. теперь через сервис уменьшаем quantity
-        restaurantService.decreaseMenuItemQuantity(command.lines());
+        restaurantService.decreaseMenuItemQuantity(lines);
 
-        Map<Long, Integer> itemsQuantityMap = command.lines().stream()
-                .collect(Collectors.toMap(
-                        OrderLine::menuItemId,
-                        OrderLine::quantity
-                ));
 
         List<OrderItem> orderItems = menuItems
                 .stream()
-                .map(menuItem -> OrderItem.from(menuItem, itemsQuantityMap))
+                .map(menuItem -> OrderItem.from(menuItem, linesMap))
                 .collect(Collectors.toCollection(ArrayList::new));
 
 
@@ -74,13 +70,16 @@ public class OrderService {
         }
     }
 
-    private void ensureItemsNotDuplicated(List<OrderLine> lines) {
-        HashMap<Long, Integer> uniqueItemsIds = new HashMap<>();
-        lines.forEach((line) -> uniqueItemsIds.put(line.menuItemId(), line.quantity()));
-        if(lines.size() != uniqueItemsIds.size()) {
-            throw new DuplicateMenuItemException();
-        }
+    private Map<Long, Integer> quantitiesByMenuItemId(List<OrderLine> lines) {
+        Map<Long, Integer> quantities = new HashMap<>();
+        for(OrderLine line : lines) {
+            if(quantities.containsKey(line.menuItemId())) {
+                throw new DuplicateMenuItemException(line.menuItemId());
+            }
+            quantities.put(line.menuItemId(), line.quantity());
 
+        }
+        return quantities;
     }
 
 }

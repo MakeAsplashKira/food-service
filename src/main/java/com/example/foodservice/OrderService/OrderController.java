@@ -10,6 +10,8 @@ import com.example.foodservice.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,8 +25,8 @@ public class OrderController {
     private final ResponseBuilder responseBuilder;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        Long userId = 1L; //TODO: поменять на реальный id из principal
+    public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request,
+                                                                        @AuthenticationPrincipal Long userId) {
 
         CreateOrderInfo orderInfo = orderService.createOrder(request.toCommand(userId));
 

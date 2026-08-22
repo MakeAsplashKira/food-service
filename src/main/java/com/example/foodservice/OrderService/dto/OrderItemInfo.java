@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public record OrderItemInfo(
         Long id,
         Long menuItemId,
+        Long providerMenuItemId,
         String name,
         BigDecimal unitPrice,
         String category,
@@ -16,6 +17,7 @@ public record OrderItemInfo(
         return new OrderItemInfo(
                 orderItem.getId(),
                 orderItem.getMenuItemId(),
+                orderItem.getProviderMenuItemId(),
                 orderItem.getName(),
                 orderItem.getUnitPrice(),
                 orderItem.getCategory(),
