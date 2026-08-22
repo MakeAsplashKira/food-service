@@ -106,6 +106,14 @@ public class RestaurantService {
         }
     }
 
+    @Transactional(readOnly = true) // лучше сделать отдельную дто, чтобы отдавать только нужные поля...
+    public MenuItemInfo getMenuItemByIdAndRestaurantId(Long menuItemId, Long restaurantId) {
+       MenuItem menuItem =  menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+                .orElseThrow(NoSuchMenuItemException::new);
+
+       return MenuItemInfo.from(menuItem);
+    }
+
 
 
     private boolean matchPassword(String rawPassword, String encodedPassword) {
