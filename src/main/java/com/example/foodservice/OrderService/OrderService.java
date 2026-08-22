@@ -1,9 +1,8 @@
 package com.example.foodservice.OrderService;
 
-import com.example.foodservice.OrderService.dto.CreateOrderCommand;
-import com.example.foodservice.OrderService.dto.CreateOrderInfo;
-import com.example.foodservice.OrderService.dto.OrderLine;
+import com.example.foodservice.OrderService.dto.*;
 import com.example.foodservice.OrderService.exception.DuplicateMenuItemException;
+import com.example.foodservice.OrderService.exception.OrderItemNotFoundException;
 import com.example.foodservice.RestaurantService.RestaurantService;
 import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
 import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
@@ -19,6 +18,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final RestaurantService restaurantService;
 
     private static final int MAX_RESTAURANTS_AVAILABLE_FOR_ORDER = 1;
@@ -49,12 +49,38 @@ public class OrderService {
 
 
         Long restaurantId = menuItems.getFirst().restaurantId();
-        Order order = Order.from(orderItems, restaurantId, command.userId(), OrderStatus.PENDING);
+        Order order = Order.from(orderItems, restaurantId, command.userId());
         orderItems.forEach(orderItem -> orderItem.setOrder(order));
 
         orderRepository.save(order);
 
         return CreateOrderInfo.from(order);
+    }
+
+    @Transactional
+    public OrderInfo addItem(AddItemCommand command) {
+        MenuItemInfo menuItemInfo = restaurantService.getMenuItemByIdAndRestaurantId(command.menuItemId(), command.restaurantId());
+
+        Order order = orderRepository.findByUserIdAndRestaurantId(command.userId(), command.restaurantId())
+                .orElseGet(() -> Order.fromAddItemCommand(command.userId(), command.restaurantId()));
+
+        order.addOrderItem(menuItemInfo);
+
+        orderRepository.save(order);
+
+        return OrderInfo.from(order);
+    }
+
+    @Transactional
+    public void incrementItemQuantity(ItemIncrementCommand command) {
+        OrderItem orderItem = orderItemRepository.findByIdAndOrderUserId(command.orderItemId(), command.userId())
+                .orElseThrow(() -> new OrderItemNotFoundException(command.orderItemId()));
+
+        Order order = orderItem.getOrder();
+
+        order.incrementOrderItemQuantity(orderItem);
+
+        orderRepository.save(order);
     }
 
     private List<Long> extractIdsFromOrderItemsToList(List<OrderLine> lines) {
@@ -81,5 +107,4 @@ public class OrderService {
         }
         return quantities;
     }
-
 }
