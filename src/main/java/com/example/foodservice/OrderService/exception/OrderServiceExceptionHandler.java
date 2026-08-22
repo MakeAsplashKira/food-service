@@ -23,4 +23,15 @@ public class OrderServiceExceptionHandler {
         return responseBuilder.badRequest(e.getMessage());
     }
 
+    @ExceptionHandler(OrderItemNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderItemNotFound(OrderItemNotFoundException e) {
+        return responseBuilder.badRequest(e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalQuantityStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalQuantityState(IllegalQuantityStateException e) {
+        return responseBuilder.badRequest(e.getMessage());
+    }
+
+
 }
