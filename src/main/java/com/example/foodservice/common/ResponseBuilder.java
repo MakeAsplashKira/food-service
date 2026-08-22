@@ -3,6 +3,7 @@ package com.example.foodservice.common;
 import com.example.foodservice.common.dto.ApiResponse;
 import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
