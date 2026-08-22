@@ -1,4 +1,4 @@
-package com.example.foodservice.common.dto;
+package com.example.foodservice.RestaurantService.dto;
 
 import com.example.foodservice.RestaurantService.entity.MenuItem;
 

@@ -1,9 +1,14 @@
 package com.example.foodservice.OrderService.exception;
 
-public class DuplicateMenuItemException extends RuntimeException {
-    private static final String DEFAULT_ERROR_MESSAGE = "Some items id's are duplicated";
+import lombok.Getter;
 
-    public DuplicateMenuItemException() {
-        super(DEFAULT_ERROR_MESSAGE);
+@Getter
+public class DuplicateMenuItemException extends RuntimeException {
+    private static final String MESSAGE_TEMPLATE = "Menu item with id %d is duplicated in the order";
+
+    private final Long menuItemId;
+    public DuplicateMenuItemException(Long menuItemId) {
+        super(MESSAGE_TEMPLATE.formatted(menuItemId));
+        this.menuItemId = menuItemId;
     }
 }

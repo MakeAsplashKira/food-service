@@ -1,10 +1,10 @@
 package com.example.foodservice.RestaurantService;
 
-import com.example.foodservice.OrderService.dto.OrderItemsRequest;
 import com.example.foodservice.OrderService.dto.OrderLine;
 import com.example.foodservice.RestaurantService.dto.AddMenuItemRequest;
+import com.example.foodservice.RestaurantService.dto.MenuItemRequestedQuantity;
 import com.example.foodservice.RestaurantService.exception.*;
-import com.example.foodservice.common.dto.MenuItemInfo;
+import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
 import com.example.foodservice.RestaurantService.dto.RegisterRequest;
 import com.example.foodservice.RestaurantService.entity.MenuItem;
 import com.example.foodservice.RestaurantService.entity.Restaurant;
@@ -94,16 +94,16 @@ public class RestaurantService {
 
     @Transactional
     public void decreaseMenuItemQuantity(List<OrderLine> lines) {
+       List<OrderLine> sortedLines = lines.stream() // одинаковый порядок сортировки (от дедлоков)
+               .sorted(Comparator.comparing(OrderLine::menuItemId))
+               .toList();
 
-        for(OrderLine line : lines) {
+        for(OrderLine line : sortedLines) {
             int rowsAffected = menuItemRepository.decreaseQuantity(line.menuItemId(), line.quantity());
             if(rowsAffected == 0) {
-                throw new NotEnoughMenuItemQuantityException();
+                throw new NotEnoughMenuItemQuantityException(line.menuItemId(), line.quantity());
             }
         }
-
-        // пока что ничего не возвращает, в будущем думаю лучше все чтобы возвращало хоть что-то, не знаю какой статус, наверное ok(200) или conflict(409)
-
     }
 
 
