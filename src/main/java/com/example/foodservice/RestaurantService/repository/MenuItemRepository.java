@@ -20,4 +20,5 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
     @Modifying
     @Query("UPDATE MenuItem m SET m.availableQuantity = m.availableQuantity - :quantity WHERE m.availableQuantity >= :quantity AND m.id = :id")
     int decreaseQuantity(Long id, Integer quantity);
+
 }
