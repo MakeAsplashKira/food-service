@@ -1,11 +1,11 @@
 package com.example.foodservice.OrderService.dto;
 
-public record ItemIncrementCommand(
+public record UpdateItemQuantityCommand(
         Long userId,
         Long orderItemId
 ) {
-    public static ItemIncrementCommand from(Long userId, Long orderItemId) {
-        return new ItemIncrementCommand(
+    public static UpdateItemQuantityCommand from(Long userId, Long orderItemId) {
+        return new UpdateItemQuantityCommand(
                 userId,
                 orderItemId
         );
