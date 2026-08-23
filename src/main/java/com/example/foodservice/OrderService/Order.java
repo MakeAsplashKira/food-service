@@ -84,6 +84,12 @@ public class Order {
         }
     }
 
+    public void removeOrderItem(OrderItem orderItem) {
+        if(this.orderItems.remove(orderItem)) {
+            orderItem.setOrder(null);
+        }
+    }
+
     public static Order from(List<OrderItem> orderItems, Long restaurantId, Long userId) {
         return new Order(
                 orderItems,
