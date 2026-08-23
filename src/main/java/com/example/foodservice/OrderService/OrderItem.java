@@ -4,6 +4,7 @@ package com.example.foodservice.OrderService;
 import com.example.foodservice.OrderService.exception.IllegalQuantityStateException;
 import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,48 +18,54 @@ import java.util.Map;
 @Setter
 @Getter
 public class OrderItem {
-    private static final Integer MAX_QUANTITY = 10;
-    private static final Integer INITIAL_QUANTITY = 1;
-    private static final Integer MIN_QUANTITY = 1;
+    private static final int MAX_QUANTITY = 10;
+    private static final int INITIAL_QUANTITY = 1;
+    private static final int MIN_QUANTITY = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
+
+    @Version
+    @Setter(AccessLevel.NONE)
+    private Long version;
 
     @Column(nullable = false)
-    Long menuItemId;
+    private Long menuItemId;
 
     @Column(nullable = false)
-    Long providerMenuItemId;
+    private Long providerMenuItemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    Order order;
+    private Order order;
 
     @Column(nullable = false)
-    String name;
+    private String name;
 
     @Column(nullable = false)
-    BigDecimal unitPrice;
+    private BigDecimal unitPrice;
 
     @Column
-    String category;
+    private String category;
 
     @Column(nullable = false)
-    Integer quantity;
+    private Integer quantity;
 
     public void incrementQuantity() {
-        if(this.quantity >= MAX_QUANTITY) {
-            throw new IllegalQuantityStateException(this.menuItemId, MAX_QUANTITY);
-        }
         this.quantity++;
     }
 
     public void decrementQuantity() {
-        if(this.quantity <= MIN_QUANTITY) {
-            return; //TODO: добавить удаление OrderItem
-        }
         this.quantity--;
+    }
+
+    public int getMinimumQuantity() {
+        return MIN_QUANTITY;
+    }
+
+    public int getMaximumQuantity() {
+        return MAX_QUANTITY; //TODO: рассчитывать индивидуально для товара по его характеристикам
     }
 
     public static OrderItem from(MenuItemInfo menuItemInfo, Map<Long, Integer> quantityMap) {
