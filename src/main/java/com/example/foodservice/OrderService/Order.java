@@ -70,6 +70,13 @@ public class Order {
     public void incrementOrderItemQuantity(OrderItem orderItem) {
         orderItem.incrementQuantity();
     }
+    public void decrementOrderItemQuantity(OrderItem orderItem) {
+        if(orderItem.getQuantity() <= orderItem.getMinimumQuantity()) {
+            this.removeOrderItem(orderItem);
+            return;
+        }
+        orderItem.decrementQuantity();
+    }
 
     public void addOrderItem(MenuItemInfo menuItemInfo) {
         Optional<OrderItem> orderItem = this.orderItems.stream()
