@@ -72,13 +72,25 @@ public class OrderService {
     }
 
     @Transactional
-    public void incrementItemQuantity(ItemIncrementCommand command) {
+    public void incrementItemQuantity(UpdateItemQuantityCommand command) {
         OrderItem orderItem = orderItemRepository.findByIdAndOrderUserId(command.orderItemId(), command.userId())
                 .orElseThrow(() -> new OrderItemNotFoundException(command.orderItemId()));
 
         Order order = orderItem.getOrder();
 
         order.incrementOrderItemQuantity(orderItem);
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void decreaseItemQuantity(UpdateItemQuantityCommand command) {
+        OrderItem orderItem = orderItemRepository.findByIdAndOrderUserId(command.orderItemId(), command.userId())
+                .orElseThrow(() -> new OrderItemNotFoundException(command.orderItemId()));
+
+        Order order = orderItem.getOrder();
+
+        order.decrementOrderItemQuantity(orderItem);
 
         orderRepository.save(order);
     }
