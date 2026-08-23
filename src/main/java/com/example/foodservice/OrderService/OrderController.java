@@ -4,16 +4,11 @@ package com.example.foodservice.OrderService;
 import com.example.foodservice.OrderService.dto.*;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
-import jakarta.persistence.PostUpdate;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
-import jakarta.websocket.server.PathParam;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,9 +46,20 @@ public class OrderController {
             @PathVariable Long orderItemId,
             @AuthenticationPrincipal Long userId) {
 
-        ItemIncrementCommand command = ItemIncrementCommand.from(userId, orderItemId);
+        UpdateItemQuantityCommand command = UpdateItemQuantityCommand.from(userId, orderItemId);
 
         orderService.incrementItemQuantity(command);
+
+        return responseBuilder.ok(null);
+    }
+
+    @PatchMapping(value = "/items/{orderItemId}/decrement")
+    public ResponseEntity<ApiResponse<Void>> decrementItemQuantity(
+            @PathVariable Long orderItemId,
+            @AuthenticationPrincipal Long userId) {
+        UpdateItemQuantityCommand command = UpdateItemQuantityCommand.from(userId, orderItemId);
+
+        orderService.decreaseItemQuantity(command);
 
         return responseBuilder.ok(null);
     }
