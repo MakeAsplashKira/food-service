@@ -1,7 +1,9 @@
 package com.example.foodservice.OrderService;
 
+import com.example.foodservice.OrderService.exception.IllegalQuantityStateException;
 import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,27 +34,27 @@ public class Order {
             fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    List<OrderItem> orderItems = new ArrayList<>();
-
-    @Column(nullable = false)
-    Long restaurantId;
-
-    @Column(nullable = false)
-    Long userId;
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at")
-    Instant createdAt;
+    private Instant createdAt;
 
     @Column(name = "pending_at")
-    Instant pendingAt;
+    private Instant pendingAt;
 
     @Column(name = "delivered_at")
-    Instant deliveredAt;
+    private Instant deliveredAt;
+
+    @Column(nullable = false)
+    private Long restaurantId;
+
+    @Column(nullable = false)
+    private Long userId;
 
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
-    OrderStatus status;
+    private OrderStatus status;
 
     public Order(List<OrderItem> orderItems, Long restaurantId, Long userId) {
         this.orderItems = orderItems;
@@ -85,7 +87,7 @@ public class Order {
 
     public void addOrderItem(MenuItemInfo menuItemInfo) {
         Optional<OrderItem> orderItem = this.orderItems.stream()
-                .filter((item) -> item.menuItemId.equals(menuItemInfo.id()))
+                .filter((item) -> item.getMenuItemId().equals(menuItemInfo.id()))
                 .findFirst();
 
         if(orderItem.isPresent()) {
