@@ -68,6 +68,11 @@ public class Order {
     }
 
     public void incrementOrderItemQuantity(OrderItem orderItem) {
+        int MAX_QUANTITY = orderItem.getMaximumQuantity();
+
+        if(orderItem.getQuantity() >= MAX_QUANTITY) {
+            throw new IllegalQuantityStateException(orderItem.getMenuItemId(), MAX_QUANTITY);
+        }
         orderItem.incrementQuantity();
     }
     public void decrementOrderItemQuantity(OrderItem orderItem) {
