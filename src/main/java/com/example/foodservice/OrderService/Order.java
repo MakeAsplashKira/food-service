@@ -22,7 +22,11 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
+
+    @Version
+    @Setter(AccessLevel.NONE)
+    private Long version;
 
     @OneToMany(mappedBy = "order",
             fetch = FetchType.LAZY,
