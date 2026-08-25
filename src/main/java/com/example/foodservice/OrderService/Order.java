@@ -1,7 +1,7 @@
 package com.example.foodservice.OrderService;
 
 import com.example.foodservice.OrderService.exception.IllegalQuantityStateException;
-import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
+import com.example.foodservice.StoreService.dto.MenuItemInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,7 +20,6 @@ import java.util.Optional;
 @Setter
 @Getter
 public class Order {
-    private static final Integer INITIAL_QUANTITY = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

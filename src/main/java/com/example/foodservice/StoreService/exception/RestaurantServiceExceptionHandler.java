@@ -1,7 +1,6 @@
-package com.example.foodservice.RestaurantService.exception;
+package com.example.foodservice.StoreService.exception;
 
 
-import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.exception.AuthRequiredException;

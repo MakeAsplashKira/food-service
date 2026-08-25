@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.exception;
+package com.example.foodservice.StoreService.exception;
 
 public class SomeMenuItemsMissingException extends RuntimeException {
     private static final String DEFAULT_ERROR_MESSAGE = "Some menu items was not found";

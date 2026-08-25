@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.entity;
+package com.example.foodservice.StoreService.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,7 +7,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 
 @Entity
@@ -15,9 +14,9 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Table(name = "restaurants")
-public class Restaurant {
+public class Store {
 
-    public Restaurant(String name, String email, String address) {
+    public Store(String name, String email, String address) {
         this.name = name;
         this.email = email;
         this.address = address;

@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.exception;
+package com.example.foodservice.StoreService.exception;
 
 public class NoSuchRestaurantException extends RuntimeException {
     public NoSuchRestaurantException(Long restaurantId) {

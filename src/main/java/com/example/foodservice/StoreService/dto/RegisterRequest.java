@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.dto;
+package com.example.foodservice.StoreService.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

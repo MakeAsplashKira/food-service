@@ -1,8 +1,8 @@
-package com.example.foodservice.RestaurantService;
+package com.example.foodservice.StoreService;
 
-import com.example.foodservice.RestaurantService.dto.*;
-import com.example.foodservice.RestaurantService.entity.MenuItem;
-import com.example.foodservice.RestaurantService.dto.AddMenuItemResponse;
+import com.example.foodservice.StoreService.dto.*;
+import com.example.foodservice.StoreService.entity.Product;
+import com.example.foodservice.StoreService.dto.AddMenuItemResponse;
 import com.example.foodservice.common.exception.AuthRequiredException;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.ResponseBuilder;
@@ -36,14 +36,14 @@ public class RestaurantController {
 
         String apiKey = extractApiKey(rawRequest);
 
-        MenuItem menuItem = restaurantService.addMenuItem(id, apiKey, request);
+        Product product = restaurantService.addMenuItem(id, apiKey, request);
 
         return responseBuilder.created(new AddMenuItemResponse(
-                menuItem.getId(),
-                menuItem.getRestaurant().getId(),
-                menuItem.getName(),
-                menuItem.getUnitPrice(),
-                menuItem.getCategory()
+                product.getId(),
+                product.getStore().getId(),
+                product.getName(),
+                product.getUnitPrice(),
+                product.getCategory()
         ));
     }
 

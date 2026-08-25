@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.entity;
+package com.example.foodservice.StoreService.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -12,17 +12,17 @@ import java.math.BigDecimal;
 @Setter
 @Getter
 @NoArgsConstructor
-public class MenuItem {
+public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
-    private Restaurant restaurant;
+    private Store store;
 
-    @Column(name = "provider_menu_item_id", nullable = false, unique = true)
-    private  Long providerMenuItemId;
+    @Column(name = "provider_menu_item_id", nullable = false)
+    private  Long storeProductId;
 
     @Column(nullable = false)
     private String name;
@@ -35,12 +35,12 @@ public class MenuItem {
     @Column(nullable = false)
     private Integer availableQuantity;
 
-    public MenuItem(Long providerMenuItemId, String name, BigDecimal unitPrice, String category, Restaurant restaurant, Integer availableQuantity) {
-        this.providerMenuItemId = providerMenuItemId;
+    public Product(Long storeProductId, String name, BigDecimal unitPrice, String category, Store store, Integer availableQuantity) {
+        this.storeProductId = storeProductId;
         this.name = name;
         this.unitPrice = unitPrice;
         this.category = category;
-        this.restaurant = restaurant;
+        this.store = store;
         this.availableQuantity = availableQuantity;
     }
 }

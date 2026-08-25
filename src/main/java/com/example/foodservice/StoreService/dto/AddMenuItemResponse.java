@@ -1,4 +1,4 @@
-package com.example.foodservice.RestaurantService.dto;
+package com.example.foodservice.StoreService.dto;
 
 import java.math.BigDecimal;
 

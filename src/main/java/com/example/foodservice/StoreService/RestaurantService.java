@@ -1,15 +1,14 @@
-package com.example.foodservice.RestaurantService;
+package com.example.foodservice.StoreService;
 
 import com.example.foodservice.OrderService.dto.OrderLine;
-import com.example.foodservice.RestaurantService.dto.AddMenuItemRequest;
-import com.example.foodservice.RestaurantService.dto.MenuItemRequestedQuantity;
-import com.example.foodservice.RestaurantService.exception.*;
-import com.example.foodservice.RestaurantService.dto.MenuItemInfo;
-import com.example.foodservice.RestaurantService.dto.RegisterRequest;
-import com.example.foodservice.RestaurantService.entity.MenuItem;
-import com.example.foodservice.RestaurantService.entity.Restaurant;
-import com.example.foodservice.RestaurantService.repository.MenuItemRepository;
-import com.example.foodservice.RestaurantService.repository.RestaurantRepository;
+import com.example.foodservice.StoreService.dto.AddMenuItemRequest;
+import com.example.foodservice.StoreService.exception.*;
+import com.example.foodservice.StoreService.dto.MenuItemInfo;
+import com.example.foodservice.StoreService.dto.RegisterRequest;
+import com.example.foodservice.StoreService.entity.Product;
+import com.example.foodservice.StoreService.entity.Store;
+import com.example.foodservice.StoreService.repository.MenuItemRepository;
+import com.example.foodservice.StoreService.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,37 +33,37 @@ public class RestaurantService {
             throw new EmailAlreadyTakenException(request.email());
         }
 
-        Restaurant restaurant = new Restaurant(
+        Store store = new Store(
                 request.name(),
                 request.email(),
                 request.address()
         );
 
-        restaurant.setPasswordHash(passwordEncoder.encode(request.password()));
-        restaurant.setApiKey(generateApiKey());
+        store.setPasswordHash(passwordEncoder.encode(request.password()));
+        store.setApiKey(generateApiKey());
 
-        restaurantRepository.save(restaurant);
+        restaurantRepository.save(store);
 
-        return restaurant.getApiKey();
+        return store.getApiKey();
     }
 
     @Transactional
-    public MenuItem addMenuItem(Long restaurantId, String apiKey, AddMenuItemRequest request) {
-        Restaurant restaurant = restaurantRepository.findByApiKeyAndId(apiKey, restaurantId)
+    public Product addMenuItem(Long restaurantId, String apiKey, AddMenuItemRequest request) {
+        Store store = restaurantRepository.findByApiKeyAndId(apiKey, restaurantId)
                 .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
 
-        MenuItem menuItem = new MenuItem(
+        Product product = new Product(
                 request.providerMenuItemId(),
                 request.name(),
                 request.price(),
                 request.category(),
-                restaurant,
+                store,
                 request.availableQuantity()
         );
 
-        menuItemRepository.save(menuItem);
+        menuItemRepository.save(product);
 
-        return menuItem;
+        return product;
     }
 
     @Transactional
@@ -81,13 +80,13 @@ public class RestaurantService {
     @Transactional(readOnly = true)
     public List<MenuItemInfo> getMenuItemsByIds(List<Long> menuItemsIds) {
 
-        List<MenuItem> menuItems = menuItemRepository.findAllByIdWithRestaurant(menuItemsIds);
+        List<Product> products = menuItemRepository.findAllByIdWithRestaurant(menuItemsIds);
 
-        if(menuItemsIds.size() != menuItems.size()) {
+        if(menuItemsIds.size() != products.size()) {
             throw new SomeMenuItemsMissingException();
         }
 
-        return menuItems.stream()
+        return products.stream()
                 .map(MenuItemInfo::from)
                 .toList();
     }
@@ -108,10 +107,10 @@ public class RestaurantService {
 
     @Transactional(readOnly = true) // лучше сделать отдельную дто, чтобы отдавать только нужные поля...
     public MenuItemInfo getMenuItemByIdAndRestaurantId(Long menuItemId, Long restaurantId) {
-       MenuItem menuItem =  menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+       Product product =  menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
                 .orElseThrow(NoSuchMenuItemException::new);
 
-       return MenuItemInfo.from(menuItem);
+       return MenuItemInfo.from(product);
     }
 
 
