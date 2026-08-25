@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/restaurant")
 @RequiredArgsConstructor
-public class RestaurantController {
-    private final RestaurantService restaurantService;
+public class StoreController {
+    private final StoreService storeService;
     private final ResponseBuilder responseBuilder;
 
     @PostMapping
     public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
 
-        String apiKey = restaurantService.register(request);
+        String apiKey = storeService.register(request);
 
         return responseBuilder.created(new RegisterResponse(apiKey));
 
@@ -36,7 +36,7 @@ public class RestaurantController {
 
         String apiKey = extractApiKey(rawRequest);
 
-        Product product = restaurantService.addMenuItem(id, apiKey, request);
+        Product product = storeService.addMenuItem(id, apiKey, request);
 
         return responseBuilder.created(new AddMenuItemResponse(
                 product.getId(),
@@ -53,7 +53,7 @@ public class RestaurantController {
                                                          @PathVariable Long menuItemId) {
         String apiKey = extractApiKey(rawRequest);
 
-        restaurantService.deleteMenuItem(apiKey, restaurantId, menuItemId);
+        storeService.deleteMenuItem(apiKey, restaurantId, menuItemId);
 
         return responseBuilder.noContent();
     }

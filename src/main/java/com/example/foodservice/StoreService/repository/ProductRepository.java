@@ -11,14 +11,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MenuItemRepository extends JpaRepository<Product, Long> {
-    Optional<Product> findByIdAndRestaurantId(Long menuItemId, Long restaurantId);
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    Optional<Product> findByIdAndStoreId(Long productId, Long storeId);
 
-    @Query("SELECT m FROM MenuItem m JOIN FETCH m.restaurant WHERE m.id in :ids")
-    List<Product>findAllByIdWithRestaurant(List<Long> ids);
+    @Query("SELECT p FROM Product p JOIN FETCH p.store WHERE p.id in :ids")
+    List<Product>findAllByIdWithStore(List<Long> ids);
 
     @Modifying
-    @Query("UPDATE MenuItem m SET m.availableQuantity = m.availableQuantity - :quantity WHERE m.availableQuantity >= :quantity AND m.id = :id")
+    @Query("UPDATE Product p SET p.availableQuantity = p.availableQuantity - :quantity WHERE p.availableQuantity >= :quantity AND p.id = :id")
     int decreaseQuantity(Long id, Integer quantity);
 
 }

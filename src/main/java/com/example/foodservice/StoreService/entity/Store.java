@@ -13,7 +13,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @Setter
 @Getter
-@Table(name = "restaurants")
+@Table(name = "stores")
 public class Store {
 
     public Store(String name, String email, String address) {

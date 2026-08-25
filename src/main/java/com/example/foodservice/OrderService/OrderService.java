@@ -3,7 +3,7 @@ package com.example.foodservice.OrderService;
 import com.example.foodservice.OrderService.dto.*;
 import com.example.foodservice.OrderService.exception.DuplicateMenuItemException;
 import com.example.foodservice.OrderService.exception.OrderItemNotFoundException;
-import com.example.foodservice.StoreService.RestaurantService;
+import com.example.foodservice.StoreService.StoreService;
 import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
 import com.example.foodservice.StoreService.dto.MenuItemInfo;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final RestaurantService restaurantService;
+    private final StoreService storeService;
 
     private static final int MAX_RESTAURANTS_AVAILABLE_FOR_ORDER = 1;
 
@@ -32,14 +32,14 @@ public class OrderService {
         Map<Long, Integer> linesMap = quantitiesByMenuItemId(lines);
 
         //2. Передаем во внешний сервис для получения MenuItem
-        List<MenuItemInfo> menuItems = restaurantService
+        List<MenuItemInfo> menuItems = storeService
                 .getMenuItemsByIds(extractIdsFromOrderItemsToList(lines));
 
         //3. Проверяем, все ли menuItems из одного ресторана
         ensureAllItemsFromSameRestaurant(menuItems);
 
         //4. теперь через сервис уменьшаем quantity
-        restaurantService.decreaseMenuItemQuantity(lines);
+        storeService.decreaseMenuItemQuantity(lines);
 
 
         List<OrderItem> orderItems = menuItems
@@ -59,7 +59,7 @@ public class OrderService {
 
     @Transactional
     public OrderInfo addItem(AddItemCommand command) {
-        MenuItemInfo menuItemInfo = restaurantService.getMenuItemByIdAndRestaurantId(command.menuItemId(), command.restaurantId());
+        MenuItemInfo menuItemInfo = storeService.getMenuItemByIdAndRestaurantId(command.menuItemId(), command.restaurantId());
 
         Order order = orderRepository.findByUserIdAndRestaurantId(command.userId(), command.restaurantId())
                 .orElseGet(() -> Order.fromAddItemCommand(command.userId(), command.restaurantId()));

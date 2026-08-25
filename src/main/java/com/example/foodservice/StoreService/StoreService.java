@@ -7,8 +7,8 @@ import com.example.foodservice.StoreService.dto.MenuItemInfo;
 import com.example.foodservice.StoreService.dto.RegisterRequest;
 import com.example.foodservice.StoreService.entity.Product;
 import com.example.foodservice.StoreService.entity.Store;
-import com.example.foodservice.StoreService.repository.MenuItemRepository;
-import com.example.foodservice.StoreService.repository.RestaurantRepository;
+import com.example.foodservice.StoreService.repository.ProductRepository;
+import com.example.foodservice.StoreService.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,16 +20,16 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class RestaurantService {
-    final private RestaurantRepository restaurantRepository;
-    final private MenuItemRepository menuItemRepository;
+public class StoreService {
+    final private StoreRepository storeRepository;
+    final private ProductRepository productRepository;
     final private BCryptPasswordEncoder passwordEncoder;
 
 
     @Transactional
     public String register(RegisterRequest request) {
 
-        if(restaurantRepository.existsByEmail(request.email())) {
+        if(storeRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyTakenException(request.email());
         }
 
@@ -42,14 +42,14 @@ public class RestaurantService {
         store.setPasswordHash(passwordEncoder.encode(request.password()));
         store.setApiKey(generateApiKey());
 
-        restaurantRepository.save(store);
+        storeRepository.save(store);
 
         return store.getApiKey();
     }
 
     @Transactional
     public Product addMenuItem(Long restaurantId, String apiKey, AddMenuItemRequest request) {
-        Store store = restaurantRepository.findByApiKeyAndId(apiKey, restaurantId)
+        Store store = storeRepository.findByApiKeyAndId(apiKey, restaurantId)
                 .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
 
         Product product = new Product(
@@ -61,26 +61,26 @@ public class RestaurantService {
                 request.availableQuantity()
         );
 
-        menuItemRepository.save(product);
+        productRepository.save(product);
 
         return product;
     }
 
     @Transactional
     public void deleteMenuItem(String apiKey, Long restaurantId, Long menuItemId) {
-        restaurantRepository.findByApiKeyAndId(apiKey, restaurantId)
+        storeRepository.findByApiKeyAndId(apiKey, restaurantId)
                 .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
 
-        menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+        productRepository.findByIdAndStoreId(menuItemId, restaurantId)
                 .orElseThrow(NoSuchMenuItemException::new);
 
-        menuItemRepository.deleteById(menuItemId);
+        productRepository.deleteById(menuItemId);
     }
 
     @Transactional(readOnly = true)
     public List<MenuItemInfo> getMenuItemsByIds(List<Long> menuItemsIds) {
 
-        List<Product> products = menuItemRepository.findAllByIdWithRestaurant(menuItemsIds);
+        List<Product> products = productRepository.findAllByIdWithStore(menuItemsIds);
 
         if(menuItemsIds.size() != products.size()) {
             throw new SomeMenuItemsMissingException();
@@ -98,7 +98,7 @@ public class RestaurantService {
                .toList();
 
         for(OrderLine line : sortedLines) {
-            int rowsAffected = menuItemRepository.decreaseQuantity(line.menuItemId(), line.quantity());
+            int rowsAffected = productRepository.decreaseQuantity(line.menuItemId(), line.quantity());
             if(rowsAffected == 0) {
                 throw new NotEnoughMenuItemQuantityException(line.menuItemId(), line.quantity());
             }
@@ -107,7 +107,7 @@ public class RestaurantService {
 
     @Transactional(readOnly = true) // лучше сделать отдельную дто, чтобы отдавать только нужные поля...
     public MenuItemInfo getMenuItemByIdAndRestaurantId(Long menuItemId, Long restaurantId) {
-       Product product =  menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+       Product product =  productRepository.findByIdAndStoreId(menuItemId, restaurantId)
                 .orElseThrow(NoSuchMenuItemException::new);
 
        return MenuItemInfo.from(product);

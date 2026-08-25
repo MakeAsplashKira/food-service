@@ -7,7 +7,7 @@ import java.util.Optional;
 
 
 @Repository
-public interface RestaurantRepository extends JpaRepository<Store, Long> {
+public interface StoreRepository extends JpaRepository<Store, Long> {
     boolean existsByEmail(String email);
     Optional<Store> findByApiKeyAndId(String apiKey, Long id);
 
