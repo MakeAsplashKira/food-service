@@ -1,7 +1,7 @@
 package com.example.foodservice.OrderService;
 
 
-import com.example.foodservice.StoreService.dto.MenuItemInfo;
+import com.example.foodservice.StoreService.dto.ProductInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -67,25 +67,25 @@ public class OrderItem {
         return MAX_QUANTITY; //TODO: рассчитывать индивидуально для товара по его характеристикам
     }
 
-    public static OrderItem from(MenuItemInfo menuItemInfo, Map<Long, Integer> quantityMap) {
+    public static OrderItem from(ProductInfo productInfo, Map<Long, Integer> quantityMap) {
         OrderItem orderItem = new OrderItem();
-        orderItem.setMenuItemId(menuItemInfo.id());
-        orderItem.setProviderMenuItemId(menuItemInfo.providerMenuItemId());
-        orderItem.setName(menuItemInfo.name());
-        orderItem.setUnitPrice(menuItemInfo.unitPrice());
-        orderItem.setCategory(menuItemInfo.category());
-        orderItem.setQuantity(quantityMap.get(menuItemInfo.id()));
+        orderItem.setMenuItemId(productInfo.id());
+        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
+        orderItem.setName(productInfo.name());
+        orderItem.setUnitPrice(productInfo.unitPrice());
+        orderItem.setCategory(productInfo.category());
+        orderItem.setQuantity(quantityMap.get(productInfo.id()));
 
         return orderItem;
     }
     
-    public static OrderItem from(Order order, MenuItemInfo menuItemInfo) {
+    public static OrderItem from(Order order, ProductInfo productInfo) {
         OrderItem orderItem = new OrderItem();
-        orderItem.setMenuItemId(menuItemInfo.id());
-        orderItem.setProviderMenuItemId(menuItemInfo.providerMenuItemId());
-        orderItem.setName(menuItemInfo.name());
-        orderItem.setUnitPrice(menuItemInfo.unitPrice());
-        orderItem.setCategory(menuItemInfo.category());
+        orderItem.setMenuItemId(productInfo.id());
+        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
+        orderItem.setName(productInfo.name());
+        orderItem.setUnitPrice(productInfo.unitPrice());
+        orderItem.setCategory(productInfo.category());
         orderItem.setQuantity(INITIAL_QUANTITY);
 
         orderItem.setOrder(order);

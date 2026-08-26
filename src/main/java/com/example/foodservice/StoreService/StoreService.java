@@ -1,9 +1,9 @@
 package com.example.foodservice.StoreService;
 
 import com.example.foodservice.OrderService.dto.OrderLine;
-import com.example.foodservice.StoreService.dto.AddMenuItemRequest;
+import com.example.foodservice.StoreService.dto.AddProductRequest;
 import com.example.foodservice.StoreService.exception.*;
-import com.example.foodservice.StoreService.dto.MenuItemInfo;
+import com.example.foodservice.StoreService.dto.ProductInfo;
 import com.example.foodservice.StoreService.dto.RegisterRequest;
 import com.example.foodservice.StoreService.entity.Product;
 import com.example.foodservice.StoreService.entity.Store;
@@ -48,7 +48,7 @@ public class StoreService {
     }
 
     @Transactional
-    public Product addMenuItem(Long restaurantId, String apiKey, AddMenuItemRequest request) {
+    public Product addMenuItem(Long restaurantId, String apiKey, AddProductRequest request) {
         Store store = storeRepository.findByApiKeyAndId(apiKey, restaurantId)
                 .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
 
@@ -78,7 +78,7 @@ public class StoreService {
     }
 
     @Transactional(readOnly = true)
-    public List<MenuItemInfo> getMenuItemsByIds(List<Long> menuItemsIds) {
+    public List<ProductInfo> getMenuItemsByIds(List<Long> menuItemsIds) {
 
         List<Product> products = productRepository.findAllByIdWithStore(menuItemsIds);
 
@@ -87,7 +87,7 @@ public class StoreService {
         }
 
         return products.stream()
-                .map(MenuItemInfo::from)
+                .map(ProductInfo::from)
                 .toList();
     }
 
@@ -106,11 +106,11 @@ public class StoreService {
     }
 
     @Transactional(readOnly = true) // лучше сделать отдельную дто, чтобы отдавать только нужные поля...
-    public MenuItemInfo getMenuItemByIdAndRestaurantId(Long menuItemId, Long restaurantId) {
+    public ProductInfo getMenuItemByIdAndRestaurantId(Long menuItemId, Long restaurantId) {
        Product product =  productRepository.findByIdAndStoreId(menuItemId, restaurantId)
                 .orElseThrow(NoSuchMenuItemException::new);
 
-       return MenuItemInfo.from(product);
+       return ProductInfo.from(product);
     }
 
 

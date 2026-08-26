@@ -2,7 +2,7 @@ package com.example.foodservice.StoreService;
 
 import com.example.foodservice.StoreService.dto.*;
 import com.example.foodservice.StoreService.entity.Product;
-import com.example.foodservice.StoreService.dto.AddMenuItemResponse;
+import com.example.foodservice.StoreService.dto.AddProductResponse;
 import com.example.foodservice.common.exception.AuthRequiredException;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.ResponseBuilder;
@@ -28,17 +28,17 @@ public class StoreController {
 
     }
 
-    @PostMapping("/{id}/menu")
-    public ResponseEntity<ApiResponse<AddMenuItemResponse>> addMenuItem(
+    @PostMapping("/{id}/product")
+    public ResponseEntity<ApiResponse<AddProductResponse>> addProduct(
             HttpServletRequest rawRequest,
             @PathVariable Long id,
-            @Valid @RequestBody AddMenuItemRequest request) {
+            @Valid @RequestBody AddProductRequest request) {
 
         String apiKey = extractApiKey(rawRequest);
 
         Product product = storeService.addMenuItem(id, apiKey, request);
 
-        return responseBuilder.created(new AddMenuItemResponse(
+        return responseBuilder.created(new AddProductResponse(
                 product.getId(),
                 product.getStore().getId(),
                 product.getName(),
@@ -47,13 +47,13 @@ public class StoreController {
         ));
     }
 
-    @DeleteMapping("/{restaurantId}/menu/{menuItemId}")
-    public ResponseEntity<Void> deleteMenuItem(HttpServletRequest rawRequest,
-                                                         @PathVariable Long restaurantId,
-                                                         @PathVariable Long menuItemId) {
+    @DeleteMapping("/{storeId}/product/{productId}")
+    public ResponseEntity<Void> deleteProduct(HttpServletRequest rawRequest,
+                                                         @PathVariable Long storeId,
+                                                         @PathVariable Long productId) {
         String apiKey = extractApiKey(rawRequest);
 
-        storeService.deleteMenuItem(apiKey, restaurantId, menuItemId);
+        storeService.deleteMenuItem(apiKey, storeId, productId);
 
         return responseBuilder.noContent();
     }

@@ -4,7 +4,7 @@ import com.example.foodservice.StoreService.entity.Product;
 
 import java.math.BigDecimal;
 
-public record MenuItemInfo(
+public record ProductInfo(
         Long id,
         Long restaurantId,
         Long providerMenuItemId,
@@ -13,8 +13,8 @@ public record MenuItemInfo(
         String category,
         Integer availableQuantity
 ) {
-    public static MenuItemInfo from(Product product) {
-        return new MenuItemInfo(
+    public static ProductInfo from(Product product) {
+        return new ProductInfo(
                 product.getId(),
                 product.getStore().getId(),
                 product.getStoreProductId(),

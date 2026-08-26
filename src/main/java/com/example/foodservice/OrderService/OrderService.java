@@ -5,7 +5,7 @@ import com.example.foodservice.OrderService.exception.DuplicateMenuItemException
 import com.example.foodservice.OrderService.exception.OrderItemNotFoundException;
 import com.example.foodservice.StoreService.StoreService;
 import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
-import com.example.foodservice.StoreService.dto.MenuItemInfo;
+import com.example.foodservice.StoreService.dto.ProductInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ public class OrderService {
         Map<Long, Integer> linesMap = quantitiesByMenuItemId(lines);
 
         //2. Передаем во внешний сервис для получения MenuItem
-        List<MenuItemInfo> menuItems = storeService
+        List<ProductInfo> menuItems = storeService
                 .getMenuItemsByIds(extractIdsFromOrderItemsToList(lines));
 
         //3. Проверяем, все ли menuItems из одного ресторана
@@ -59,12 +59,12 @@ public class OrderService {
 
     @Transactional
     public OrderInfo addItem(AddItemCommand command) {
-        MenuItemInfo menuItemInfo = storeService.getMenuItemByIdAndRestaurantId(command.menuItemId(), command.restaurantId());
+        ProductInfo productInfo = storeService.getMenuItemByIdAndRestaurantId(command.menuItemId(), command.restaurantId());
 
         Order order = orderRepository.findByUserIdAndRestaurantId(command.userId(), command.restaurantId())
                 .orElseGet(() -> Order.fromAddItemCommand(command.userId(), command.restaurantId()));
 
-        order.addOrderItem(menuItemInfo);
+        order.addOrderItem(productInfo);
 
         orderRepository.save(order);
 
@@ -99,7 +99,7 @@ public class OrderService {
         return lines.stream().map(OrderLine::menuItemId).toList();
     }
 
-    private void ensureAllItemsFromSameRestaurant(List<MenuItemInfo> menuItems) {
+    private void ensureAllItemsFromSameRestaurant(List<ProductInfo> menuItems) {
         Set<Long> restaurantIds = new HashSet<>();
         menuItems.forEach(menuItem -> restaurantIds.add(menuItem.restaurantId()));
 

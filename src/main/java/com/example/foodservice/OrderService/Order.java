@@ -1,7 +1,7 @@
 package com.example.foodservice.OrderService;
 
 import com.example.foodservice.OrderService.exception.IllegalQuantityStateException;
-import com.example.foodservice.StoreService.dto.MenuItemInfo;
+import com.example.foodservice.StoreService.dto.ProductInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -84,15 +84,15 @@ public class Order {
         orderItem.decrementQuantity();
     }
 
-    public void addOrderItem(MenuItemInfo menuItemInfo) {
+    public void addOrderItem(ProductInfo productInfo) {
         Optional<OrderItem> orderItem = this.orderItems.stream()
-                .filter((item) -> item.getMenuItemId().equals(menuItemInfo.id()))
+                .filter((item) -> item.getMenuItemId().equals(productInfo.id()))
                 .findFirst();
 
         if(orderItem.isPresent()) {
              orderItem.get().incrementQuantity();
         } else {
-            OrderItem newOrderItem = OrderItem.from(this, menuItemInfo);
+            OrderItem newOrderItem = OrderItem.from(this, productInfo);
             this.orderItems.add(newOrderItem);
         }
     }

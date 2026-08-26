@@ -1,6 +1,6 @@
 package com.example.foodservice.StoreService.dto;
 
-public record MenuItemRequestedQuantity(
+public record ProductRequestedQuantity(
         Long menuItemId,
         Integer requestedQuantity
 ) {

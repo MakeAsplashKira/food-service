@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-public record AddMenuItemRequest(
+public record AddProductRequest(
         @NotNull
         Long providerMenuItemId,
 
