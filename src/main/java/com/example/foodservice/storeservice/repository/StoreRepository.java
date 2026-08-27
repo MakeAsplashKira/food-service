@@ -1,5 +1,5 @@
-package com.example.foodservice.StoreService.repository;
-import com.example.foodservice.StoreService.entity.Store;
+package com.example.foodservice.storeservice.repository;
+import com.example.foodservice.storeservice.entity.Store;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

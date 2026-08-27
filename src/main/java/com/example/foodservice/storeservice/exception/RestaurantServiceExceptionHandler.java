@@ -1,4 +1,4 @@
-package com.example.foodservice.StoreService.exception;
+package com.example.foodservice.storeservice.exception;
 
 
 import com.example.foodservice.common.ResponseBuilder;

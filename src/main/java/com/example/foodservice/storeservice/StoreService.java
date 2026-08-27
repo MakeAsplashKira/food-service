@@ -1,14 +1,14 @@
-package com.example.foodservice.StoreService;
+package com.example.foodservice.storeservice;
 
 import com.example.foodservice.OrderService.dto.OrderLine;
-import com.example.foodservice.StoreService.dto.AddProductRequest;
-import com.example.foodservice.StoreService.exception.*;
-import com.example.foodservice.StoreService.dto.ProductInfo;
-import com.example.foodservice.StoreService.dto.RegisterRequest;
-import com.example.foodservice.StoreService.entity.Product;
-import com.example.foodservice.StoreService.entity.Store;
-import com.example.foodservice.StoreService.repository.ProductRepository;
-import com.example.foodservice.StoreService.repository.StoreRepository;
+import com.example.foodservice.storeservice.dto.AddProductRequest;
+import com.example.foodservice.storeservice.exception.*;
+import com.example.foodservice.storeservice.dto.ProductInfo;
+import com.example.foodservice.storeservice.dto.RegisterRequest;
+import com.example.foodservice.storeservice.entity.Product;
+import com.example.foodservice.storeservice.entity.Store;
+import com.example.foodservice.storeservice.repository.ProductRepository;
+import com.example.foodservice.storeservice.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,17 +48,14 @@ public class StoreService {
     }
 
     @Transactional
-    public Product addMenuItem(Long restaurantId, String apiKey, AddProductRequest request) {
+    public Product addProduct(Long restaurantId, String apiKey, AddProductRequest request) {
         Store store = storeRepository.findByApiKeyAndId(apiKey, restaurantId)
                 .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
 
         Product product = new Product(
-                request.providerMenuItemId(),
+                request.providerMenuItemId().toString(),
                 request.name(),
-                request.price(),
-                request.category(),
-                store,
-                request.availableQuantity()
+                request.category()
         );
 
         productRepository.save(product);
@@ -78,7 +75,7 @@ public class StoreService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getMenuItemsByIds(List<Long> menuItemsIds) {
+    public List<ProductInfo> getProductsByIds(List<Long> menuItemsIds) {
 
         List<Product> products = productRepository.findAllByIdWithStore(menuItemsIds);
 
@@ -92,7 +89,7 @@ public class StoreService {
     }
 
     @Transactional
-    public void decreaseMenuItemQuantity(List<OrderLine> lines) {
+    public void decreaseProductQuantity(List<OrderLine> lines) {
        List<OrderLine> sortedLines = lines.stream() // одинаковый порядок сортировки (от дедлоков)
                .sorted(Comparator.comparing(OrderLine::menuItemId))
                .toList();
@@ -105,8 +102,8 @@ public class StoreService {
         }
     }
 
-    @Transactional(readOnly = true) // лучше сделать отдельную дто, чтобы отдавать только нужные поля...
-    public ProductInfo getMenuItemByIdAndRestaurantId(Long menuItemId, Long restaurantId) {
+    @Transactional(readOnly = true)
+    public ProductInfo getProductByIdAndStoreId(Long menuItemId, Long restaurantId) {
        Product product =  productRepository.findByIdAndStoreId(menuItemId, restaurantId)
                 .orElseThrow(NoSuchMenuItemException::new);
 

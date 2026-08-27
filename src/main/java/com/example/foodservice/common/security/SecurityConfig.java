@@ -17,12 +17,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final SecurityEntryPoint securityEntryPoint;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
         http.addFilterBefore(jwtAuthFilter,  UsernamePasswordAuthenticationFilter.class);
 
         http.authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/user/login", "/user", "/restaurant/**").permitAll()
+                        auth.requestMatchers("/user/login", "/user", "/product/**", "/brand/**").permitAll()
                                 .requestMatchers("/**").authenticated()
         );
 

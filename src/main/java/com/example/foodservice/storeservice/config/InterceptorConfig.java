@@ -1,4 +1,4 @@
-package com.example.foodservice.StoreService.config;
+package com.example.foodservice.storeservice.config;
 
 
 import com.example.foodservice.common.MetricsInterceptor;

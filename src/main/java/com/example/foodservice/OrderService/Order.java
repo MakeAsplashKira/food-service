@@ -1,7 +1,7 @@
 package com.example.foodservice.OrderService;
 
 import com.example.foodservice.OrderService.exception.IllegalQuantityStateException;
-import com.example.foodservice.StoreService.dto.ProductInfo;
+import com.example.foodservice.storeservice.dto.ProductInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

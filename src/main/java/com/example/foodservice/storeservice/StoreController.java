@@ -1,8 +1,8 @@
-package com.example.foodservice.StoreService;
+package com.example.foodservice.storeservice;
 
-import com.example.foodservice.StoreService.dto.*;
-import com.example.foodservice.StoreService.entity.Product;
-import com.example.foodservice.StoreService.dto.AddProductResponse;
+import com.example.foodservice.storeservice.dto.*;
+import com.example.foodservice.storeservice.entity.Product;
+import com.example.foodservice.storeservice.dto.AddProductResponse;
 import com.example.foodservice.common.exception.AuthRequiredException;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.ResponseBuilder;
@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/restaurant")
+@RequestMapping(value = "/store")
 @RequiredArgsConstructor
 public class StoreController {
     private final StoreService storeService;
@@ -28,24 +28,7 @@ public class StoreController {
 
     }
 
-    @PostMapping("/{id}/product")
-    public ResponseEntity<ApiResponse<AddProductResponse>> addProduct(
-            HttpServletRequest rawRequest,
-            @PathVariable Long id,
-            @Valid @RequestBody AddProductRequest request) {
 
-        String apiKey = extractApiKey(rawRequest);
-
-        Product product = storeService.addMenuItem(id, apiKey, request);
-
-        return responseBuilder.created(new AddProductResponse(
-                product.getId(),
-                product.getStore().getId(),
-                product.getName(),
-                product.getUnitPrice(),
-                product.getCategory()
-        ));
-    }
 
     @DeleteMapping("/{storeId}/product/{productId}")
     public ResponseEntity<Void> deleteProduct(HttpServletRequest rawRequest,

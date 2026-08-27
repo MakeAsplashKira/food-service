@@ -3,9 +3,9 @@ package com.example.foodservice.OrderService;
 import com.example.foodservice.OrderService.dto.*;
 import com.example.foodservice.OrderService.exception.DuplicateMenuItemException;
 import com.example.foodservice.OrderService.exception.OrderItemNotFoundException;
-import com.example.foodservice.StoreService.StoreService;
+import com.example.foodservice.storeservice.StoreService;
 import com.example.foodservice.OrderService.exception.DifferentRestaurantException;
-import com.example.foodservice.StoreService.dto.ProductInfo;
+import com.example.foodservice.storeservice.dto.ProductInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,13 +33,13 @@ public class OrderService {
 
         //2. Передаем во внешний сервис для получения MenuItem
         List<ProductInfo> menuItems = storeService
-                .getMenuItemsByIds(extractIdsFromOrderItemsToList(lines));
+                .getProductsByIds(extractIdsFromOrderItemsToList(lines));
 
         //3. Проверяем, все ли menuItems из одного ресторана
         ensureAllItemsFromSameRestaurant(menuItems);
 
         //4. теперь через сервис уменьшаем quantity
-        storeService.decreaseMenuItemQuantity(lines);
+        storeService.decreaseProductQuantity(lines);
 
 
         List<OrderItem> orderItems = menuItems
@@ -59,7 +59,7 @@ public class OrderService {
 
     @Transactional
     public OrderInfo addItem(AddItemCommand command) {
-        ProductInfo productInfo = storeService.getMenuItemByIdAndRestaurantId(command.menuItemId(), command.restaurantId());
+        ProductInfo productInfo = storeService.getProductByIdAndStoreId(command.menuItemId(), command.restaurantId());
 
         Order order = orderRepository.findByUserIdAndRestaurantId(command.userId(), command.restaurantId())
                 .orElseGet(() -> Order.fromAddItemCommand(command.userId(), command.restaurantId()));

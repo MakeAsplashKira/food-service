@@ -1,4 +1,4 @@
-package com.example.foodservice.StoreService.dto;
+package com.example.foodservice.storeservice.dto;
 
 public record RegisterResponse(
         String apiKey
