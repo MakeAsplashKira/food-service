@@ -18,6 +18,9 @@ public class JwtService {
     private final SecretKey secret;
     private final Long expiration;
 
+    protected static final String SUBJECT_TYPE_KEY = "subjectType";
+    protected static  final String BRAND_ID_KEY = "brandId";
+
 
 
     @Autowired
@@ -27,14 +30,15 @@ public class JwtService {
         this.expiration = expiration;
     }
 
-    public String generateAccessToken(Long userId) {
+    public String generateAccessToken(Long id, SubjectType subjectType) {
 
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .signWith(secret)
-                .subject(userId.toString())
+                .subject(id.toString())
+                .claim(SUBJECT_TYPE_KEY, subjectType)
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .compact();
@@ -46,6 +50,5 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-
     }
 }

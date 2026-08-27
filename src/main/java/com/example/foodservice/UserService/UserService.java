@@ -5,6 +5,7 @@ import com.example.foodservice.UserService.dto.RegisterRequest;
 import com.example.foodservice.UserService.exception.NoSuchUserException;
 import com.example.foodservice.UserService.exception.NumberAlreadyTakenException;
 import com.example.foodservice.common.security.JwtService;
+import com.example.foodservice.common.security.SubjectType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class UserService {
         userRepository.save(user);
 
 
-        return jwtService.generateAccessToken(user.getId());
+        return jwtService.generateAccessToken(user.getId(), SubjectType.USER);
 
     }
 
@@ -44,7 +45,7 @@ public class UserService {
         }
 
 
-        return jwtService.generateAccessToken(user.id);
+        return jwtService.generateAccessToken(user.getId(), SubjectType.USER);
     }
 
 

@@ -51,8 +51,6 @@ public class Store {
     @Setter(AccessLevel.NONE)
     private Instant createdAt;
 
-
-
     public Store(String name, String email, String address) {
         this.name = name;
         this.email = email;
