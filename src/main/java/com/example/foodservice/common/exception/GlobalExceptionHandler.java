@@ -32,7 +32,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
         return responseBuilder.badRequest(e.getMessage());
+    }
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalCredentials(InvalidCredentialsException e) {
+        return responseBuilder.unauthorized(e.getMessage());
     }
 }

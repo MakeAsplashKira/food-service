@@ -1,4 +1,4 @@
-package com.example.foodservice.OrderService.exception;
+package com.example.foodservice.orderservice.exception;
 
 import lombok.Getter;
 

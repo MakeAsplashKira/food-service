@@ -36,6 +36,11 @@ public class ResponseBuilder {
                 .body(build(FAILURE, NO_DATA, error));
     }
 
+    public ResponseEntity<ApiResponse<Void>> forbidden(String error) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN.value())
+                .body(build(FAILURE, NO_DATA, error));
+    }
+
     public ResponseEntity<ApiResponse<Void>> notFound(String error) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
                 .body(build(FAILURE, NO_DATA, error));

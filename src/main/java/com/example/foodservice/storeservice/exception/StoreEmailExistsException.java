@@ -1,8 +1,8 @@
 package com.example.foodservice.storeservice.exception;
 
 
-public class EmailAlreadyTakenException extends RuntimeException {
-    public EmailAlreadyTakenException(String email)
+public class StoreEmailExistsException extends RuntimeException {
+    public StoreEmailExistsException(String email)
     {
         super("This email already taken: " + email);
     }

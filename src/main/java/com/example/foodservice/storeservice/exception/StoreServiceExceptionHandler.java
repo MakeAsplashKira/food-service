@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 //TODO: посмотреть как делается в реальных проектах бигтеха
 @RestControllerAdvice
 @RequiredArgsConstructor
-public class RestaurantServiceExceptionHandler {
+public class StoreServiceExceptionHandler {
     private final ResponseBuilder responseBuilder;
 
-    @ExceptionHandler(EmailAlreadyTakenException.class)
-    public ResponseEntity<ApiResponse<Void>> handleEmailExist(EmailAlreadyTakenException e) {
+    @ExceptionHandler(StoreEmailExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailExist(StoreEmailExistsException e) {
         return responseBuilder.conflict(e.getMessage());
     }
 
@@ -30,8 +30,8 @@ public class RestaurantServiceExceptionHandler {
         return responseBuilder.notFound(e.getMessage());
     }
 
-    @ExceptionHandler(NoSuchMenuItemException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNoSuchMenuItem(NoSuchMenuItemException e) {
+    @ExceptionHandler(NoSuchProductException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoSuchMenuItem(NoSuchProductException e) {
         return responseBuilder.notFound(e.getMessage());
     }
 
@@ -43,5 +43,20 @@ public class RestaurantServiceExceptionHandler {
     @ExceptionHandler(NotEnoughMenuItemQuantityException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotEnoughMenuItemQuantity(NotEnoughMenuItemQuantityException e) {
         return responseBuilder.conflict(e.getMessage());
+    }
+
+    @ExceptionHandler(StockAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStockAlreadyExists(StockAlreadyExistsException e) {
+        return responseBuilder.conflict(e.getMessage());
+    }
+
+    @ExceptionHandler(StoreNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStoreNotFound(StoreNotFoundException e) {
+        return responseBuilder.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(StoreNotFoundByBrandException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStoreNotFoundByBrand(StoreNotFoundByBrandException e) {
+        return responseBuilder.notFound(e.getMessage());
     }
 }

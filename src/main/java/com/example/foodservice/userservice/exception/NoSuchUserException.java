@@ -1,4 +1,4 @@
-package com.example.foodservice.UserService.exception;
+package com.example.foodservice.userservice.exception;
 
 public class NoSuchUserException extends RuntimeException {
     public NoSuchUserException(String message) {

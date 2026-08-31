@@ -1,4 +1,4 @@
-package com.example.foodservice.OrderService.exception;
+package com.example.foodservice.orderservice.exception;
 
 
 import com.example.foodservice.common.ResponseBuilder;
@@ -30,6 +30,11 @@ public class OrderServiceExceptionHandler {
 
     @ExceptionHandler(IllegalQuantityStateException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalQuantityState(IllegalQuantityStateException e) {
+        return responseBuilder.badRequest(e.getMessage());
+    }
+
+    @ExceptionHandler(OrderUnmodifiableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderUnmodifiable(OrderUnmodifiableException e) {
         return responseBuilder.badRequest(e.getMessage());
     }
 
