@@ -1,4 +1,4 @@
-package com.example.foodservice.OrderService.dto;
+package com.example.foodservice.orderservice.dto;
 
 public record UpdateItemQuantityCommand(
         Long userId,

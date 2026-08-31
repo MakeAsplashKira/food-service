@@ -1,6 +1,4 @@
-package com.example.foodservice.OrderService.dto;
-
-import com.example.foodservice.OrderService.OrderItem;
+package com.example.foodservice.orderservice.dto;
 
 import java.math.BigDecimal;
 

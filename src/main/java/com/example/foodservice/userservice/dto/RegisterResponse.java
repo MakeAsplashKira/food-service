@@ -1,4 +1,4 @@
-package com.example.foodservice.UserService.dto;
+package com.example.foodservice.userservice.dto;
 
 public record RegisterResponse(
         String token

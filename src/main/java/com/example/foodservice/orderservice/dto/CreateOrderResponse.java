@@ -1,6 +1,6 @@
-package com.example.foodservice.OrderService.dto;
+package com.example.foodservice.orderservice.dto;
 
-import com.example.foodservice.OrderService.OrderStatus;
+import com.example.foodservice.orderservice.OrderStatus;
 
 import java.time.Instant;
 import java.util.List;

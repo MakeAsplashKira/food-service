@@ -1,7 +1,7 @@
-package com.example.foodservice.OrderService.dto;
+package com.example.foodservice.orderservice.dto;
 
-import com.example.foodservice.OrderService.Order;
-import com.example.foodservice.OrderService.OrderStatus;
+import com.example.foodservice.orderservice.Order;
+import com.example.foodservice.orderservice.OrderStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,7 +18,7 @@ public record CreateOrderInfo(
         return new CreateOrderInfo(
                 order.getId(),
                 order.getOrderItems().stream().map(OrderItemInfo::from).toList(),
-                order.getRestaurantId(),
+                order.getStoreId(),
                 order.getUserId(),
                 order.getStatus(),
                 order.getCreatedAt()

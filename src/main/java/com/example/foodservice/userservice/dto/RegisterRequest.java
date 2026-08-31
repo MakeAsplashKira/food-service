@@ -1,4 +1,4 @@
-package com.example.foodservice.UserService.dto;
+package com.example.foodservice.userservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
