@@ -13,7 +13,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class MetricsInterceptor implements HandlerInterceptor {
     private final RequestMetrics requestMetrics;
 
-    @Override
+    @Override //TODO: убрать дурачка
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) {
