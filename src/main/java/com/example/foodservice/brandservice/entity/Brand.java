@@ -1,4 +1,4 @@
-package com.example.foodservice.storeservice.brand;
+package com.example.foodservice.brandservice.entity;
 
 
 import com.example.foodservice.storeservice.entity.Store;
@@ -31,9 +31,6 @@ public class Brand {
 
     @Column(nullable = false)
     private String passwordHash;
-
-    @OneToMany(mappedBy = "brand", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Store> storeList = new ArrayList<>();
 
     @Column
     private String imageUrl;

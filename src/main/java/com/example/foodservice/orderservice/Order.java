@@ -1,7 +1,6 @@
-package com.example.foodservice.OrderService;
+package com.example.foodservice.orderservice;
 
-import com.example.foodservice.OrderService.exception.IllegalQuantityStateException;
-import com.example.foodservice.storeservice.dto.ProductInfo;
+import com.example.foodservice.orderservice.exception.IllegalQuantityStateException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -46,7 +45,7 @@ public class Order {
     private Instant deliveredAt;
 
     @Column(nullable = false)
-    private Long restaurantId;
+    private Long storeId;
 
     @Column(nullable = false)
     private Long userId;
@@ -55,17 +54,16 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
-    public Order(List<OrderItem> orderItems, Long restaurantId, Long userId) {
+    public Order(List<OrderItem> orderItems, Long storeId, Long userId) {
         this.orderItems = orderItems;
-        this.restaurantId = restaurantId;
+        this.storeId = storeId;
         this.userId = userId;
         this.status = OrderStatus.DRAFT;
     }
-    public Order(Long userId, Long restaurantId) {
+    public Order(Long userId, Long storeId) {
         this.userId = userId;
-        this.restaurantId = restaurantId;
+        this.storeId = storeId;
         this.status = OrderStatus.DRAFT;
-
     }
 
     public void incrementOrderItemQuantity(OrderItem orderItem) {
@@ -84,18 +82,18 @@ public class Order {
         orderItem.decrementQuantity();
     }
 
-    public void addOrderItem(ProductInfo productInfo) {
-        Optional<OrderItem> orderItem = this.orderItems.stream()
-                .filter((item) -> item.getMenuItemId().equals(productInfo.id()))
-                .findFirst();
-
-        if(orderItem.isPresent()) {
-             orderItem.get().incrementQuantity();
-        } else {
-            OrderItem newOrderItem = OrderItem.from(this, productInfo);
-            this.orderItems.add(newOrderItem);
-        }
-    }
+//    public void addOrderItem(ProductInfo productInfo) {
+//        Optional<OrderItem> orderItem = this.orderItems.stream()
+//                .filter((item) -> item.getMenuItemId().equals(productInfo.id()))
+//                .findFirst();
+//
+//        if(orderItem.isPresent()) {
+//             orderItem.get().incrementQuantity();
+//        } else {
+//            OrderItem newOrderItem = OrderItem.from(this, productInfo);
+//            this.orderItems.add(newOrderItem);
+//        }
+//    }
 
     public void removeOrderItem(OrderItem orderItem) {
         if(this.orderItems.remove(orderItem)) {
@@ -103,21 +101,10 @@ public class Order {
         }
     }
 
-    public static Order from(List<OrderItem> orderItems, Long restaurantId, Long userId) {
-        return new Order(
-                orderItems,
-                restaurantId,
-                userId
-        );
-
+    public boolean canBeModified() {
+        return this.status == OrderStatus.DRAFT;
     }
 
-    public static Order fromAddItemCommand(Long userId, Long restaurantId) {
-        return new Order(
-                userId,
-                restaurantId
-        );
-    }
 }
 
 

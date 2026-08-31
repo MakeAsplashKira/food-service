@@ -1,9 +1,9 @@
-package com.example.foodservice.UserService;
+package com.example.foodservice.userservice;
 
-import com.example.foodservice.UserService.dto.LoginRequest;
-import com.example.foodservice.UserService.dto.RegisterRequest;
-import com.example.foodservice.UserService.exception.NoSuchUserException;
-import com.example.foodservice.UserService.exception.NumberAlreadyTakenException;
+import com.example.foodservice.userservice.dto.LoginRequest;
+import com.example.foodservice.userservice.dto.RegisterRequest;
+import com.example.foodservice.userservice.exception.NoSuchUserException;
+import com.example.foodservice.userservice.exception.NumberAlreadyTakenException;
 import com.example.foodservice.common.security.JwtService;
 import com.example.foodservice.common.security.SubjectType;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,6 @@ public class UserService {
             throw new NumberAlreadyTakenException("Number already taken: " + request.phone());
         }
 
-
         User user = new User();
         user.setNumber(request.phone());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
@@ -44,11 +43,8 @@ public class UserService {
             throw new NoSuchUserException("Number or password was incorrect");
         }
 
-
         return jwtService.generateAccessToken(user.getId(), SubjectType.USER);
     }
-
-
 
 
 }

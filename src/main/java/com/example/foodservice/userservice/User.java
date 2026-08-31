@@ -1,4 +1,4 @@
-package com.example.foodservice.UserService;
+package com.example.foodservice.userservice;
 
 import jakarta.persistence.*;
 import lombok.Getter;

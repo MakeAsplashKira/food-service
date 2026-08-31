@@ -1,12 +1,9 @@
-package com.example.foodservice.storeservice.entity;
+package com.example.foodservice.brandservice.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -18,8 +15,9 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-    private List<StoreProduct> storeProduct = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brandId", nullable = false)
+    private Brand brand;
 
     @Column(name = "store_product_id", nullable = false)
     private String externalProductId;
@@ -27,7 +25,7 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @Column() //TODO: разработать систему хранения фотографий и их раздачу
+    @Column //TODO: разработать систему хранения фотографий и их раздачу
     private String imageUrl;
 
     private String category; //TODO: разработать систему категорий
@@ -37,6 +35,12 @@ public class Product {
         this.externalProductId = externalProductId;
         this.name = name;
         this.category = category;
+    }
 
+    public Product(Brand brand, String externalProductId, String name, String category) {
+        this.brand = brand;
+        this.externalProductId = externalProductId;
+        this.name = name;
+        this.category = category;
     }
 }

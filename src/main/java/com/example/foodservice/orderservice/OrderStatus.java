@@ -1,4 +1,4 @@
-package com.example.foodservice.OrderService;
+package com.example.foodservice.orderservice;
 
 
 public enum OrderStatus {

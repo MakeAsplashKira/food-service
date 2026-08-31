@@ -1,10 +1,10 @@
-package com.example.foodservice.UserService;
+package com.example.foodservice.userservice;
 
 
-import com.example.foodservice.UserService.dto.LoginRequest;
-import com.example.foodservice.UserService.dto.LoginResponse;
-import com.example.foodservice.UserService.dto.RegisterRequest;
-import com.example.foodservice.UserService.dto.RegisterResponse;
+import com.example.foodservice.userservice.dto.LoginRequest;
+import com.example.foodservice.userservice.dto.LoginResponse;
+import com.example.foodservice.userservice.dto.RegisterRequest;
+import com.example.foodservice.userservice.dto.RegisterResponse;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -25,15 +25,15 @@ public class UserController {
     @PostMapping
     public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
 
-        String apiKey = userService.register(request);
+        String token = userService.register(request);
 
-        return responseBuilder.created(new RegisterResponse(apiKey));
+        return responseBuilder.created(new RegisterResponse(token));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        String apiKey = userService.login(request);
-        return responseBuilder.ok(new LoginResponse(apiKey));
+        String token = userService.login(request);
+        return responseBuilder.ok(new LoginResponse(token));
     }
 
 }

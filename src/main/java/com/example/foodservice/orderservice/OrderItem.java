@@ -1,7 +1,6 @@
-package com.example.foodservice.OrderService;
+package com.example.foodservice.orderservice;
 
 
-import com.example.foodservice.storeservice.dto.ProductInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -67,29 +66,29 @@ public class OrderItem {
         return MAX_QUANTITY; //TODO: рассчитывать индивидуально для товара по его характеристикам
     }
 
-    public static OrderItem from(ProductInfo productInfo, Map<Long, Integer> quantityMap) {
-        OrderItem orderItem = new OrderItem();
-        orderItem.setMenuItemId(productInfo.id());
-        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
-        orderItem.setName(productInfo.name());
-        orderItem.setUnitPrice(productInfo.unitPrice());
-        orderItem.setCategory(productInfo.category());
-        orderItem.setQuantity(quantityMap.get(productInfo.id()));
-
-        return orderItem;
-    }
-    
-    public static OrderItem from(Order order, ProductInfo productInfo) {
-        OrderItem orderItem = new OrderItem();
-        orderItem.setMenuItemId(productInfo.id());
-        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
-        orderItem.setName(productInfo.name());
-        orderItem.setUnitPrice(productInfo.unitPrice());
-        orderItem.setCategory(productInfo.category());
-        orderItem.setQuantity(INITIAL_QUANTITY);
-
-        orderItem.setOrder(order);
-
-        return orderItem;
-    }
+//    public static OrderItem from(ProductInfo productInfo, Map<Long, Integer> quantityMap) {
+//        OrderItem orderItem = new OrderItem();
+//        orderItem.setMenuItemId(productInfo.id());
+//        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
+//        orderItem.setName(productInfo.name());
+//        orderItem.setUnitPrice(productInfo.unitPrice());
+//        orderItem.setCategory(productInfo.category());
+//        orderItem.setQuantity(quantityMap.get(productInfo.id()));
+//
+//        return orderItem;
+//    }
+//
+//    public static OrderItem from(Order order, ProductInfo productInfo) {
+//        OrderItem orderItem = new OrderItem();
+//        orderItem.setMenuItemId(productInfo.id());
+//        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
+//        orderItem.setName(productInfo.name());
+//        orderItem.setUnitPrice(productInfo.unitPrice());
+//        orderItem.setCategory(productInfo.category());
+//        orderItem.setQuantity(INITIAL_QUANTITY);
+//
+//        orderItem.setOrder(order);
+//
+//        return orderItem;
+//    }
 }
