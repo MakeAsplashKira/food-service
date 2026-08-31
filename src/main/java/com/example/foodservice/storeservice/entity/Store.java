@@ -1,6 +1,5 @@
 package com.example.foodservice.storeservice.entity;
 
-import com.example.foodservice.storeservice.brand.Brand;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,15 +23,11 @@ public class Store {
     @Setter(AccessLevel.NONE)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
+    @Column(name = "brand_id", nullable = false)
+    private Long brandId;
 
     @OneToMany(mappedBy = "store", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<StoreProduct> storeProduct = new ArrayList<>();
-
-    @Column(nullable = false)
-    private String name;
+    private List<Stock> stock = new ArrayList<>();
 
     @Column(nullable = false)
     private String address;
@@ -43,16 +38,13 @@ public class Store {
     @Column(name = "password_hash", nullable = false, length = 60)
     private String passwordHash;
 
-    @Column(name = "api_key", nullable = false, unique = true, length = 64)
-    private String apiKey;
-
     @CreationTimestamp
     @Column(name = "created_at")
     @Setter(AccessLevel.NONE)
     private Instant createdAt;
 
-    public Store(String name, String email, String address) {
-        this.name = name;
+    public Store(Long brandId, String email, String address) {
+        this.brandId = brandId;
         this.email = email;
         this.address = address;
     }

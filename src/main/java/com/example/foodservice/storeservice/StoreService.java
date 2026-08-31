@@ -1,131 +1,153 @@
 package com.example.foodservice.storeservice;
 
-import com.example.foodservice.OrderService.dto.OrderLine;
-import com.example.foodservice.storeservice.dto.AddProductRequest;
+import com.example.foodservice.brandservice.dto.StoreDTO.StoreInfo;
+import com.example.foodservice.common.exception.InvalidCredentialsException;
+import com.example.foodservice.common.security.JwtService;
+import com.example.foodservice.common.security.SubjectType;
+import com.example.foodservice.storeservice.dto.AuthDTO.LoginCommand;
+import com.example.foodservice.storeservice.dto.ProductDTO.ProductInfo;
+import com.example.foodservice.storeservice.dto.ProductDTO.ProductOfferInfo;
+import com.example.foodservice.storeservice.dto.StockDTO.AddStockCommand;
+import com.example.foodservice.storeservice.dto.StockDTO.StockInfo;
+import com.example.foodservice.storeservice.entity.Stock;
 import com.example.foodservice.storeservice.exception.*;
-import com.example.foodservice.storeservice.dto.ProductInfo;
-import com.example.foodservice.storeservice.dto.RegisterRequest;
-import com.example.foodservice.storeservice.entity.Product;
 import com.example.foodservice.storeservice.entity.Store;
-import com.example.foodservice.storeservice.repository.ProductRepository;
+import com.example.foodservice.storeservice.repository.StockRepository;
 import com.example.foodservice.storeservice.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 
 
 @Service
 @RequiredArgsConstructor
 public class StoreService {
-    final private StoreRepository storeRepository;
-    final private ProductRepository productRepository;
-    final private BCryptPasswordEncoder passwordEncoder;
+    private final StoreRepository storeRepository;
+    private final StockRepository stockRepository;
+
+    private final ProductCatalog productCatalog;
+
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
 
     @Transactional
-    public String register(RegisterRequest request) {
+    public StoreInfo register(Long brandId, String email, String rawPassword, String address) {
 
-        if(storeRepository.existsByEmail(request.email())) {
-            throw new EmailAlreadyTakenException(request.email());
+        if (storeRepository.existsByEmail(email)) {
+            throw new StoreEmailExistsException(email);
         }
 
-        Store store = new Store(
-                request.name(),
-                request.email(),
-                request.address()
-        );
+        Store store = new Store(brandId, email, address);
 
-        store.setPasswordHash(passwordEncoder.encode(request.password()));
-        store.setApiKey(generateApiKey());
+        store.setPasswordHash(passwordEncoder.encode(rawPassword));
 
         storeRepository.save(store);
 
-        return store.getApiKey();
-    }
-
-    @Transactional
-    public Product addProduct(Long restaurantId, String apiKey, AddProductRequest request) {
-        Store store = storeRepository.findByApiKeyAndId(apiKey, restaurantId)
-                .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
-
-        Product product = new Product(
-                request.providerMenuItemId().toString(),
-                request.name(),
-                request.category()
-        );
-
-        productRepository.save(product);
-
-        return product;
-    }
-
-    @Transactional
-    public void deleteMenuItem(String apiKey, Long restaurantId, Long menuItemId) {
-        storeRepository.findByApiKeyAndId(apiKey, restaurantId)
-                .orElseThrow(() -> new NoSuchRestaurantException(restaurantId));
-
-        productRepository.findByIdAndStoreId(menuItemId, restaurantId)
-                .orElseThrow(NoSuchMenuItemException::new);
-
-        productRepository.deleteById(menuItemId);
+        return new StoreInfo(store.getId(), store.getEmail(), store.getAddress());
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProductsByIds(List<Long> menuItemsIds) {
+    public String login(LoginCommand command) {
+        Store store = storeRepository.findByEmail(command.email()).orElseThrow(InvalidCredentialsException::new);
 
-        List<Product> products = productRepository.findAllByIdWithStore(menuItemsIds);
-
-        if(menuItemsIds.size() != products.size()) {
-            throw new SomeMenuItemsMissingException();
+        if (!passwordEncoder.matches(command.rawPassword(), store.getPasswordHash())) {
+            throw new InvalidCredentialsException();
         }
 
-        return products.stream()
-                .map(ProductInfo::from)
-                .toList();
+        return jwtService.generateAccessToken(store.getId(), store.getBrandId(), SubjectType.STORE);
     }
 
     @Transactional
-    public void decreaseProductQuantity(List<OrderLine> lines) {
-       List<OrderLine> sortedLines = lines.stream() // одинаковый порядок сортировки (от дедлоков)
-               .sorted(Comparator.comparing(OrderLine::menuItemId))
-               .toList();
-
-        for(OrderLine line : sortedLines) {
-            int rowsAffected = productRepository.decreaseQuantity(line.menuItemId(), line.quantity());
-            if(rowsAffected == 0) {
-                throw new NotEnoughMenuItemQuantityException(line.menuItemId(), line.quantity());
-            }
+    public StockInfo addStock(AddStockCommand command) {
+        if (stockRepository.existsByStoreIdAndProductId(command.storeId(), command.productId())) {
+            throw new StockAlreadyExistsException(command.storeId(), command.productId());
         }
+
+        //TODO: добавить проверку productId, не критично
+
+        Store store = storeRepository.getReferenceById(command.storeId());
+
+        Stock stock = command.toStock(store);
+
+        try {
+            stockRepository.saveAndFlush(stock);
+        } catch (DataIntegrityViolationException e) {
+            throw new StockAlreadyExistsException(command.storeId(), command.productId());
+        }
+
+        return StockInfo.from(stock);
     }
 
     @Transactional(readOnly = true)
-    public ProductInfo getProductByIdAndStoreId(Long menuItemId, Long restaurantId) {
-       Product product =  productRepository.findByIdAndStoreId(menuItemId, restaurantId)
-                .orElseThrow(NoSuchMenuItemException::new);
+    public List<StoreInfo> getStoresByBrandId(Long brandId) {
+        List<Store> stores = storeRepository.findByBrandId(brandId);
+        return stores.stream().map(store -> new StoreInfo(store.getId(), store.getEmail(), store.getAddress())).toList();
+    }
 
-       return ProductInfo.from(product);
+    @Transactional(readOnly = true)
+    public List<ProductOfferInfo> getBrandProductsOffers(Long brandId) {
+
+        List<Store> stores = storeRepository.findByBrandId(brandId);
+        if (stores.isEmpty()) {throw new StoreNotFoundByBrandException(brandId);}
+
+        //TODO: в будущем будет вычислятся по координатам
+        Store store = stores.getFirst();
+
+        //TODO: также нужно будет подумать над тем как отдавать это, какие фильтры применять, как это разнести по категориям
+        //скорее всего вырастит в отдельный метод, как и метод выше
+        List<Stock> stocks = store.getStock();
+
+        // проверка вроде на уникальность не нужна, она обеспечивается unique constraint на сущности по storeId и productId
+        List<Long> productIds = stocks.stream().map(Stock::getProductId).toList();
+
+
+        //TODO: в будущем при разьезде нужно также обрабатывать, ведь может приехать ошибка, пока что она обрабатывается другим сервисом
+        List<ProductInfo> productsInfo = productCatalog.getProductsByIds(productIds);
+
+        Map<Long, ProductInfo> productsInfoMap = productsInfo.stream()
+                .collect(Collectors.toMap(ProductInfo::id, Function.identity()));
+
+        return stocks.stream().map(stock ->
+            ProductOfferInfo.from(productsInfoMap.get(stock.getProductId()), stock)
+        ).toList();
     }
 
 
+//    @Transactional(readOnly = true)
+//    public List<ProductInfo> getProductsByIds(List<Long> menuItemsIds) {
+//
+//        List<Product> products = productRepository.findAllByIdWithStore(menuItemsIds);
+//
+//        if(menuItemsIds.size() != products.size()) {
+//            throw new SomeMenuItemsMissingException();
+//        }
+//
+//        return products.stream()
+//                .map(ProductInfo::from)
+//                .toList();
+//    }
 
-    private boolean matchPassword(String rawPassword, String encodedPassword) {
-        return passwordEncoder.matches(rawPassword, encodedPassword);
-    }
-
-    private String generateApiKey() {
-        SecureRandom random = new SecureRandom();
-        byte[] bytes = new byte[32]; // 256 bit
-        random.nextBytes(bytes);
-
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(bytes);
-    }
-
-
+//    @Transactional
+//    public void decreaseProductQuantity(List<OrderLine> lines) {
+//       List<OrderLine> sortedLines = lines.stream() // одинаковый порядок сортировки (от дедлоков)
+//               .sorted(Comparator.comparing(OrderLine::menuItemId))
+//               .toList();
+//
+//        for(OrderLine line : sortedLines) {
+//            int rowsAffected = productRepository.decreaseQuantity(line.menuItemId(), line.quantity());
+//            if(rowsAffected == 0) {
+//                throw new NotEnoughMenuItemQuantityException(line.menuItemId(), line.quantity());
+//            }
+//        }
+//    }
 
 }
