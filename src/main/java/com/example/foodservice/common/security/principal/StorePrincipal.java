@@ -1,4 +1,4 @@
-package com.example.foodservice.common.security;
+package com.example.foodservice.common.security.principal;
 
 public record StorePrincipal(
         Long storeId,

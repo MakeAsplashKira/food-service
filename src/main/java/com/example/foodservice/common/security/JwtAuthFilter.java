@@ -1,6 +1,8 @@
 package com.example.foodservice.common.security;
 
-import com.example.foodservice.common.exception.AuthRequiredException;
+import com.example.foodservice.common.security.principal.BrandPrincipal;
+import com.example.foodservice.common.security.principal.StorePrincipal;
+import com.example.foodservice.common.security.principal.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

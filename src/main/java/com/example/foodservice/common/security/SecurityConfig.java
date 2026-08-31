@@ -10,21 +10,36 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final SecurityEntryPoint securityEntryPoint;
+    private final SecurityDeniedHandler securityDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
-        http.addFilterBefore(jwtAuthFilter,  UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         http.authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/user/login", "/user", "/product/**", "/brand/**").permitAll()
-                                .requestMatchers("/**").authenticated()
+
+                auth.requestMatchers("/static/**").permitAll()
+
+
+                        .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
+                        .requestMatchers("/brand/{brandId}/products").permitAll()
+
+                        .requestMatchers("/user", "/user/login").permitAll()
+                        .requestMatchers("/brand", "/brand/login").permitAll()
+                        .requestMatchers("/store", "/store/login").permitAll()
+
+                        .requestMatchers("/user/**").hasRole(SubjectType.USER.toString())
+                        .requestMatchers("/store/**").hasRole(SubjectType.STORE.toString())
+                        .requestMatchers("/brand/**").hasRole(SubjectType.BRAND.toString())
+
+
+                        .requestMatchers("/**").authenticated()
         );
 
         http.csrf(csrf -> csrf.disable());
@@ -33,7 +48,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
         http.exceptionHandling(ex -> ex.authenticationEntryPoint(securityEntryPoint));
-
+        http.exceptionHandling(ex -> ex.accessDeniedHandler(securityDeniedHandler));
         return http.build();
     }
 }
