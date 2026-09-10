@@ -65,7 +65,8 @@ CREATE TABLE orders
 (
     id           BIGSERIAL PRIMARY KEY,
     version      BIGINT,
-    store_id     BIGINT      NOT NULL,
+    brand_id     BIGINT,
+    store_id     BIGINT,
     user_id      BIGINT      NOT NULL,
     status       VARCHAR(20) NOT NULL,
     created_at   TIMESTAMP WITH TIME ZONE,
@@ -81,12 +82,12 @@ CREATE TABLE order_items
     id                    BIGSERIAL PRIMARY KEY,
     version               BIGINT,
     order_id              BIGINT         NOT NULL,
-    menu_item_id          BIGINT         NOT NULL,
-    provider_menu_item_id BIGINT         NOT NULL,
-    name                  VARCHAR(255)   NOT NULL,
-    unit_price            NUMERIC(19, 2) NOT NULL,
+    product_id            BIGINT         NOT NULL,
+    external_product_id   BIGINT,
+    name                  VARCHAR(255),
+    unit_price            NUMERIC(19, 2),
     category              VARCHAR(255),
-    quantity              INTEGER        NOT NULL,
+    requested_quantity    INTEGER,
     CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
 );
 

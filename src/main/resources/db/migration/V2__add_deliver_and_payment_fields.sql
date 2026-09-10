@@ -1,0 +1,8 @@
+ALTER TABLE orders ADD COLUMN address VARCHAR(255);
+ALTER TABLE orders ADD COLUMN comment_to_store VARCHAR(50);
+ALTER TABLE orders ADD COLUMN comment_to_courier VARCHAR(50);
+
+ALTER TABLE orders ADD COLUMN longitude DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN latitude DOUBLE PRECISION;
+
+ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50);
