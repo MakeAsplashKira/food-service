@@ -3,7 +3,9 @@ package com.example.foodservice.orderservice.dto;
 
 import com.example.foodservice.orderservice.Order;
 import com.example.foodservice.orderservice.OrderItem;
+import com.example.foodservice.orderservice.PaymentMethod;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -44,12 +46,13 @@ public final class CheckoutDTO {
     public record CheckoutItemInfo(
             Long orderItemId,
             Long productId,
+            String externalProductId,
 
             String name,
             String imageUrl,
             String category,
 
-            boolean isAvailable,
+            boolean available,
             Integer requestedQuantity,
             BigDecimal unitPrice
     ) {
@@ -64,6 +67,7 @@ public final class CheckoutDTO {
                         ProductInfo product = productMap.get(productId);
                         StockInfo stock = stockMap.get(productId);
 
+                        String externalProductId = product.externalProductId();
                         boolean isAvailable = stock != null && item.getRequestedQuantity() <= stock.availableQuantity();
                         BigDecimal unitPrice = (stock != null)? stock.unitPrice(): null;
 
@@ -74,6 +78,7 @@ public final class CheckoutDTO {
                         return new CheckoutItemInfo(
                                 item.getId(),
                                 productId,
+                                externalProductId,
 
                                 name,
                                 imageUrl,
@@ -124,7 +129,7 @@ public final class CheckoutDTO {
                     checkoutItemInfo.imageUrl(),
                     checkoutItemInfo.category(),
 
-                    checkoutItemInfo.isAvailable(),
+                    checkoutItemInfo.available(),
                     checkoutItemInfo.requestedQuantity(),
                     checkoutItemInfo.unitPrice()
             );
@@ -133,13 +138,15 @@ public final class CheckoutDTO {
     public  record CheckoutRequest(
             @NotNull @Min(1) Long brandId,
             @Size(max = 100) String commentToStore,
-            @Size(max = 100) String commentToCourier){
+            @Size(max = 100) String commentToCourier,
+            PaymentMethod paymentMethod){
         public CheckoutCommand toCommand(Long userId) {
             return new CheckoutCommand(
                     userId,
                     this.brandId,
                     this.commentToStore,
-                    this.commentToCourier
+                    this.commentToCourier,
+                    this.paymentMethod
             );
         }
     }
@@ -147,7 +154,8 @@ public final class CheckoutDTO {
             Long userId,
             Long brandId,
             String commentToStore,
-            String commentToCourier
+            String commentToCourier,
+            PaymentMethod paymentMethod
     ){
 
     }

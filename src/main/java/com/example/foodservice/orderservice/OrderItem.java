@@ -57,7 +57,6 @@ public class OrderItem {
         return MAX_QUANTITY; //TODO: рассчитывать индивидуально для товара по его характеристикам
     }
 
-
     public OrderItem(Order order, Long productId) {
         this.setOrder(order);
         this.productId = productId;

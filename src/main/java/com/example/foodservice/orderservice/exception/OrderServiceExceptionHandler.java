@@ -44,4 +44,9 @@ public class OrderServiceExceptionHandler {
         return responseBuilder.badRequest(e.getMessage());
     }
 
+    @ExceptionHandler(OrderItemUnavailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderItemUnavailable(OrderItemUnavailableException e) {
+        return responseBuilder.conflict(e.getMessage());
+    }
+
 }

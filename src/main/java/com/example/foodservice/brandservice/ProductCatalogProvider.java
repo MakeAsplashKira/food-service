@@ -42,6 +42,6 @@ public class ProductCatalogProvider implements ProductCatalog, ProductCatalogByO
             throw new SomeProductsNotFoundException(); //TODO: передавать id-шники, которые не нашлись
         }
 
-        return products.stream().map(p -> new com.example.foodservice.orderservice.dto.ProductInfo(p.getId(), p.getName(), p.getImageUrl(), p.getCategory())).toList();
+        return products.stream().map(p -> new com.example.foodservice.orderservice.dto.ProductInfo(p.getId(), p.getExternalProductId(), p.getName(), p.getImageUrl(), p.getCategory())).toList();
     }
 }

@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -119,7 +121,7 @@ public class OrderService {
 
         List<ProductInfo> productInfo = productCatalog.getProductsByIdsForOrder(productIds);
 
-        //Если не хватает предмета, будет просто CheckoutItemInfo с null полями, кроме productId и с isAvailable=false
+        //Если не хватает предмета, будет просто CheckoutItemInfo с null полями, кроме productId и с available=false
         List<CheckoutItemInfo> checkoutItemInfo = CheckoutItemInfo.from(productInfo, stockInfo, order.getOrderItems());
         CheckoutInfo checkoutInfo = CheckoutInfo.from(storeId, order, checkoutItemInfo, userInfo);
 
@@ -139,8 +141,21 @@ public class OrderService {
         Order order = pricedOrder.order();
         CheckoutInfo checkoutInfo = pricedOrder.checkoutInfo();
 
+        Map<Long, CheckoutItemInfo> checkoutItemMap = checkoutInfo.checkoutItems().stream()
+                .collect(Collectors.toMap(CheckoutItemInfo::orderItemId, Function.identity()));
+
+        for(OrderItem orderItem: order.getOrderItems()) {
+            CheckoutItemInfo checkoutItem = checkoutItemMap.get(orderItem.getId());
+
+            if(checkoutItem.available()){
+                order.snapshotOrderItem(orderItem, checkoutItem);
+            } else throw new OrderItemUnavailableException(orderItem.getId());
+        }
+
+        order.snapshotOrder(checkoutInfo,
+                command.commentToStore(),
+                command.commentToCourier(),
+                command.paymentMethod());
 
     }
-
-
 }

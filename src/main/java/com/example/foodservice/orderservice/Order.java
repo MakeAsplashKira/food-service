@@ -1,5 +1,7 @@
 package com.example.foodservice.orderservice;
 
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutInfo;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutItemInfo;
 import com.example.foodservice.orderservice.exception.IllegalQuantityStateException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -101,6 +103,20 @@ public class Order {
                         () -> this.orderItems.add(new OrderItem(this, productId))
                 );
 
+    }
+    public void snapshotOrderItem(OrderItem orderItem, CheckoutItemInfo checkoutItem){
+        orderItem.setName(checkoutItem.name());
+        orderItem.setUnitPrice(checkoutItem.unitPrice());
+        orderItem.setExternalProductId(checkoutItem.externalProductId());
+    }
+
+    public void snapshotOrder(CheckoutInfo checkoutInfo, String commentToStore, String commentToCourier, PaymentMethod paymentMethod) {
+        this.setAddress(checkoutInfo.userInfo().address());
+        this.setStoreId(checkoutInfo.storeId());
+        this.setCommentToStore(commentToStore);
+        this.setCommentToCourier(commentToCourier);
+        this.setPaymentMethod(paymentMethod);
+        this.setStatus(OrderStatus.AWAITING_PAYMENT);
     }
 
     public void removeOrderItem(OrderItem orderItem) {
