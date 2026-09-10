@@ -2,17 +2,18 @@ package com.example.foodservice.brandservice;
 
 import com.example.foodservice.brandservice.dto.AuthDTO.*;
 import com.example.foodservice.brandservice.dto.BrandInfo;
+import com.example.foodservice.brandservice.dto.ProductDTO.AddProductRequest;
+import com.example.foodservice.brandservice.dto.ProductDTO.AddProductCommand;
+import com.example.foodservice.brandservice.dto.ProductDTO.AddProductResponse;
+import com.example.foodservice.brandservice.dto.ProductDTO.DeleteProductCommand;
 import com.example.foodservice.brandservice.dto.StoreDTO.AddStoreRequest;
 import com.example.foodservice.brandservice.dto.StoreDTO.AddStoreResponse;
 import com.example.foodservice.brandservice.dto.StoreDTO.StoreInfo;
-import com.example.foodservice.brandservice.dto.product.AddProductRequest;
-import com.example.foodservice.brandservice.dto.product.AddProductResponse;
-import com.example.foodservice.brandservice.dto.product.ProductInfo;
-import com.example.foodservice.brandservice.dto.product.ProductResponse;
+import com.example.foodservice.brandservice.dto.ProductInfo;
+import com.example.foodservice.brandservice.dto.ProductResponse;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
 import com.example.foodservice.common.security.principal.BrandPrincipal;
-import com.example.foodservice.storeservice.entity.Store;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -31,9 +32,9 @@ public class BrandController {
     private final BrandService brandService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<AuthResponse>> register
-            (@Valid @RequestPart("request") RegisterRequest request,
-             @RequestPart(value = "image") MultipartFile image) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(
+            @Valid @RequestPart("request") RegisterRequest request,
+             @RequestPart("image") MultipartFile image) {
 
         String token = brandService.register(request.toCommand(), image);
 
@@ -49,11 +50,11 @@ public class BrandController {
 
     @PostMapping("/product")
     public ResponseEntity<ApiResponse<AddProductResponse>> addProduct(
-            @Valid @RequestBody AddProductRequest request,
+            @Valid @RequestPart("request") AddProductRequest request,
+            @RequestPart("image") MultipartFile image,
             @AuthenticationPrincipal BrandPrincipal principal) {
 
-        ProductInfo productInfo = brandService.addProduct(request.toCommand(principal.brandId()));
-
+        ProductInfo productInfo = brandService.addProduct(request.toCommand(principal.brandId(), image));
         return responseBuilder.created(AddProductResponse.from(productInfo));
     }
 
@@ -88,5 +89,15 @@ public class BrandController {
             @AuthenticationPrincipal BrandPrincipal brandPrincipal) {
         List<ProductInfo> products = brandService.getProductsByBrandId(brandPrincipal.brandId());
         return responseBuilder.ok(products.stream().map(ProductResponse::from).toList());
+    }
+
+    @DeleteMapping("/product/{productId}")
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(
+            @PathVariable Long productId,
+            @AuthenticationPrincipal BrandPrincipal principal) {
+
+        brandService.deleteProduct(DeleteProductCommand.from(principal.brandId(), productId));
+
+        return responseBuilder.ok(null);
     }
 }

@@ -2,11 +2,20 @@ package com.example.foodservice.orderservice;
 
 
 import com.example.foodservice.common.security.principal.UserPrincipal;
-import com.example.foodservice.orderservice.dto.*;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutInfo;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutRequest;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.ViewCheckoutResponse;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.GetCheckoutCommand;
+import com.example.foodservice.orderservice.dto.OrderDTO;
+import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
+import com.example.foodservice.orderservice.dto.OrderInfo;
+import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
+import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,47 +29,79 @@ public class OrderController {
     private final OrderService orderService;
     private final ResponseBuilder responseBuilder;
 
-//    @PostMapping
-//    public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request,
-//                                                                        @AuthenticationPrincipal Long userId) {
-//
-//        CreateOrderInfo orderInfo = orderService.createOrder(request.toCommand(userId));
-//
-//        return responseBuilder.created(CreateOrderResponse.from(orderInfo));
-//    }
 
-//    @Validated
-//    @PostMapping(value = "/add-item")
-//    public ResponseEntity<ApiResponse<OrderInfo>> addItem(
-//            @Positive @RequestParam Long restaurantId,
-//            @Positive @RequestParam Long menuItemId,
-//            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-//
-//        AddItemCommand command = AddItemCommand.from(userPrincipal.userId(), restaurantId, menuItemId);
-//
-//        OrderInfo orderInfo = orderService.addItem(command);
-//
-//        return responseBuilder.ok(orderInfo);
-//    }
-//    @PatchMapping(value = "/items/{orderItemId}/increment")
-//    public ResponseEntity<ApiResponse<Void>> incrementItemQuantity(
-//            @PathVariable Long orderItemId,
-//            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-//
-//        UpdateItemQuantityCommand command = UpdateItemQuantityCommand.from(userPrincipal.userId(), orderItemId);
-//
-//        orderService.incrementItemQuantity(command);
-//
-//        return responseBuilder.ok(null);
-//    }
+    @PostMapping(value = "/item")
+    public ResponseEntity<ApiResponse<OrderInfo>> addItem(
+            @Valid @RequestBody OrderDTO.AddOrderItemRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-    @PatchMapping(value = "/items/{orderItemId}/decrement")
+
+        OrderInfo orderInfo = orderService.addOrderItem(request.toCommand(userPrincipal.userId()));
+
+        return responseBuilder.ok(orderInfo);
+    }
+    @PatchMapping(value = "/item/{orderItemId}/increment")
+    public ResponseEntity<ApiResponse<Void>> incrementItemQuantity(
+            @PathVariable Long orderItemId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        UpdateItemQuantityCommand command = UpdateItemQuantityCommand.from(userPrincipal.userId(), orderItemId);
+
+        orderService.incrementItemQuantity(command);
+
+        return responseBuilder.ok(null);
+    }
+
+    @PatchMapping(value = "/item/{orderItemId}/decrement")
     public ResponseEntity<ApiResponse<Void>> decrementItemQuantity(
             @PathVariable Long orderItemId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         UpdateItemQuantityCommand command = UpdateItemQuantityCommand.from(userPrincipal.userId(), orderItemId);
 
         orderService.decreaseItemQuantity(command);
+
+        return responseBuilder.ok(null);
+    }
+
+    @PatchMapping(value = "/item/{orderItemId}")
+    public ResponseEntity<ApiResponse<Void>> setItemQuantity(
+            @Valid @RequestBody SetItemQuantityRequest request,
+            @PathVariable Long orderItemId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        orderService.setItemQuantity(request.toCommand(userPrincipal.userId(), orderItemId));
+
+        return responseBuilder.ok(null);
+    }
+
+
+    @GetMapping
+    @Validated
+    public ResponseEntity<ApiResponse<OrderInfo>> getOrder(
+            @RequestParam @NotNull @Min(1) Long brandId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return responseBuilder.ok(orderService.getOrder(new GetOrderCommand(principal.userId(), brandId)));
+    }
+
+    @Validated
+    @GetMapping("/checkout")
+    public ResponseEntity<ApiResponse<ViewCheckoutResponse>> getCheckoutDetails(
+            @RequestParam @NotNull @Min(1) Long brandId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        CheckoutInfo checkoutInfo = orderService
+                .getCheckoutDetails(GetCheckoutCommand.from(principal.userId(), brandId));
+
+        return responseBuilder.ok(ViewCheckoutResponse.from(checkoutInfo));
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<ApiResponse<Void>> checkoutOrder(
+            @Valid @RequestBody CheckoutRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+            ) {
+        orderService.checkoutOrder(request.toCommand(principal.userId()));
 
         return responseBuilder.ok(null);
     }

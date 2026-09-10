@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 @Entity
 @Table(name = "order_items")
@@ -29,33 +28,25 @@ public class OrderItem {
     private Long version;
 
     @Column(nullable = false)
-    private Long menuItemId;
-
-    @Column(nullable = false)
-    private Long providerMenuItemId;
+    private Long productId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(nullable = false)
     private String name;
-
-    @Column(nullable = false)
     private BigDecimal unitPrice;
-
-    @Column
-    private String category;
+    private String externalProductId;
 
     @Column(nullable = false)
-    private Integer quantity;
+    private Integer requestedQuantity;
 
     public void incrementQuantity() {
-        this.quantity++;
+        this.requestedQuantity++;
     }
 
     public void decrementQuantity() {
-        this.quantity--;
+        this.requestedQuantity--;
     }
 
     public int getMinimumQuantity() {
@@ -66,29 +57,10 @@ public class OrderItem {
         return MAX_QUANTITY; //TODO: рассчитывать индивидуально для товара по его характеристикам
     }
 
-//    public static OrderItem from(ProductInfo productInfo, Map<Long, Integer> quantityMap) {
-//        OrderItem orderItem = new OrderItem();
-//        orderItem.setMenuItemId(productInfo.id());
-//        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
-//        orderItem.setName(productInfo.name());
-//        orderItem.setUnitPrice(productInfo.unitPrice());
-//        orderItem.setCategory(productInfo.category());
-//        orderItem.setQuantity(quantityMap.get(productInfo.id()));
-//
-//        return orderItem;
-//    }
-//
-//    public static OrderItem from(Order order, ProductInfo productInfo) {
-//        OrderItem orderItem = new OrderItem();
-//        orderItem.setMenuItemId(productInfo.id());
-//        orderItem.setProviderMenuItemId(productInfo.providerMenuItemId());
-//        orderItem.setName(productInfo.name());
-//        orderItem.setUnitPrice(productInfo.unitPrice());
-//        orderItem.setCategory(productInfo.category());
-//        orderItem.setQuantity(INITIAL_QUANTITY);
-//
-//        orderItem.setOrder(order);
-//
-//        return orderItem;
-//    }
+
+    public OrderItem(Order order, Long productId) {
+        this.setOrder(order);
+        this.productId = productId;
+        this.requestedQuantity = INITIAL_QUANTITY;
+    }
 }

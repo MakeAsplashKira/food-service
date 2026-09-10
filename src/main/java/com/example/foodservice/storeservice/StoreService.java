@@ -8,6 +8,7 @@ import com.example.foodservice.storeservice.dto.AuthDTO.LoginCommand;
 import com.example.foodservice.storeservice.dto.ProductDTO.ProductInfo;
 import com.example.foodservice.storeservice.dto.ProductDTO.ProductOfferInfo;
 import com.example.foodservice.storeservice.dto.StockDTO.AddStockCommand;
+import com.example.foodservice.storeservice.dto.StockDTO.DeleteStockByProductIdCommand;
 import com.example.foodservice.storeservice.dto.StockDTO.StockInfo;
 import com.example.foodservice.storeservice.entity.Stock;
 import com.example.foodservice.storeservice.exception.*;
@@ -43,14 +44,19 @@ public class StoreService {
     public StoreInfo register(Long brandId, String email, String rawPassword, String address) {
 
         if (storeRepository.existsByEmail(email)) {
-            throw new StoreEmailExistsException(email);
+            throw new StoreExistsException(email);
         }
 
         Store store = new Store(brandId, email, address);
 
         store.setPasswordHash(passwordEncoder.encode(rawPassword));
 
-        storeRepository.save(store);
+        try {
+            storeRepository.saveAndFlush(store);
+        } catch (DataIntegrityViolationException e) {
+            throw new StoreExistsException(email);
+        }
+
 
         return new StoreInfo(store.getId(), store.getEmail(), store.getAddress());
     }
@@ -69,7 +75,7 @@ public class StoreService {
     @Transactional
     public StockInfo addStock(AddStockCommand command) {
         if (stockRepository.existsByStoreIdAndProductId(command.storeId(), command.productId())) {
-            throw new StockAlreadyExistsException(command.storeId(), command.productId());
+            throw new StockExistsException(command.storeId(), command.productId());
         }
 
         //TODO: добавить проверку productId, не критично
@@ -81,7 +87,7 @@ public class StoreService {
         try {
             stockRepository.saveAndFlush(stock);
         } catch (DataIntegrityViolationException e) {
-            throw new StockAlreadyExistsException(command.storeId(), command.productId());
+            throw new StockExistsException(command.storeId(), command.productId());
         }
 
         return StockInfo.from(stock);
@@ -121,9 +127,20 @@ public class StoreService {
         ).toList();
     }
 
+    @Transactional
+    public void deleteStockByStoreIdAndProductId(DeleteStockByProductIdCommand command) {
+        int deletedRows = stockRepository.deleteByStoreIdAndProductId(command.storeId(), command.productId());
+
+        if(deletedRows == 0) {
+            throw new StockNotFoundByStoreIdAndProductIdException(command.storeId(), command.productId());
+        }
+    }
+
+
+
 
 //    @Transactional(readOnly = true)
-//    public List<ProductInfo> getProductsByIds(List<Long> menuItemsIds) {
+//    public List<ProductInfo> getProductsByIdsForOrder(List<Long> menuItemsIds) {
 //
 //        List<Product> products = productRepository.findAllByIdWithStore(menuItemsIds);
 //

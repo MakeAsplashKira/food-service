@@ -1,4 +1,4 @@
-package com.example.foodservice.brandservice.dto.product;
+package com.example.foodservice.brandservice.dto;
 
 public record ProductResponse(
         Long id,

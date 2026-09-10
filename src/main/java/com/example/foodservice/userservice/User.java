@@ -24,11 +24,10 @@ public class User {
     @Column(nullable = false, length = 60)
     String passwordHash;
 
-    @Column
     String name;
 
-    @Column
     String address;
+
 
     @CreationTimestamp
     @Column(name = "created_at")

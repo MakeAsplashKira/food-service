@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").hasRole(SubjectType.USER.toString())
                         .requestMatchers("/store/**").hasRole(SubjectType.STORE.toString())
                         .requestMatchers("/brand/**").hasRole(SubjectType.BRAND.toString())
+                        .requestMatchers("/order/**").hasRole(SubjectType.USER.toString())
 
 
                         .requestMatchers("/**").authenticated()

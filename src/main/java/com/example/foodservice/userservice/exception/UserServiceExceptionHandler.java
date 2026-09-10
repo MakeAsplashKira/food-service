@@ -18,8 +18,13 @@ public class UserServiceExceptionHandler {
         return responseBuilder.conflict(e.getMessage());
     }
 
-    @ExceptionHandler(NoSuchUserException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNoSuchUser(NoSuchUserException e) {
+    @ExceptionHandler(UserNotFoundByNumberAndPasswordException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFoundByNumberAndPassword(UserNotFoundByNumberAndPasswordException e) {
+        return responseBuilder.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException e) {
         return responseBuilder.notFound(e.getMessage());
     }
 

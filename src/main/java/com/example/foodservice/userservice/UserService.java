@@ -2,7 +2,7 @@ package com.example.foodservice.userservice;
 
 import com.example.foodservice.userservice.dto.LoginRequest;
 import com.example.foodservice.userservice.dto.RegisterRequest;
-import com.example.foodservice.userservice.exception.NoSuchUserException;
+import com.example.foodservice.userservice.exception.UserNotFoundByNumberAndPasswordException;
 import com.example.foodservice.userservice.exception.NumberAlreadyTakenException;
 import com.example.foodservice.common.security.JwtService;
 import com.example.foodservice.common.security.SubjectType;
@@ -37,10 +37,10 @@ public class UserService {
     @Transactional
     public String login(LoginRequest request) {
         User user = userRepository.findByNumber(request.number())
-                .orElseThrow(() -> new NoSuchUserException("Number or password was incorrect"));
+                .orElseThrow(UserNotFoundByNumberAndPasswordException::new);
 
         if(!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new NoSuchUserException("Number or password was incorrect");
+            throw new UserNotFoundByNumberAndPasswordException();
         }
 
         return jwtService.generateAccessToken(user.getId(), SubjectType.USER);

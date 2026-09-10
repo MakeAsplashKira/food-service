@@ -39,6 +39,7 @@
   .tabs button.on{background:var(--accent);border-color:var(--accent);color:#1a1005;font-weight:600}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
   .grid{display:grid;gap:12px}
+  .cols2{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
   .cols3{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .cols4{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
   .row{display:flex;gap:8px;align-items:center}
@@ -60,6 +61,7 @@
   .brand .body{padding:10px 12px}
   .prod{display:flex;flex-direction:column;gap:8px}
   .prod .price{font-weight:700;color:var(--accent)}
+  .prod.out{opacity:.55}
   .stepper{display:flex;gap:6px;align-items:center}
   .stepper button{width:32px;padding:6px 0;text-align:center;flex:none}
   .stepper input{text-align:center;padding:6px 4px}
@@ -75,6 +77,7 @@
   .gap{border-left:3px solid var(--warn);padding:8px 12px;margin-bottom:10px;background:var(--panel2);
        border-radius:0 8px 8px 0}
   .gap.crit{border-left-color:var(--danger)}
+  .gap.done{border-left-color:var(--accent2);opacity:.72}
   .gap code{background:#0a0d12;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--accent)}
   .hide{display:none !important}
   .toast{position:fixed;right:16px;bottom:16px;z-index:99;display:flex;flex-direction:column;gap:8px}
@@ -83,8 +86,13 @@
   .toast div.bad{border-left-color:var(--danger)}
   .toast div.warnc{border-left-color:var(--warn)}
   table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--muted);font-weight:500;font-size:12px}
+  td code,th code{background:#0a0d12;padding:1px 5px;border-radius:4px;color:var(--accent);font-size:12px}
+  .m{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  .m.GET{color:var(--accent2)} .m.POST{color:var(--accent)}
+  .m.PATCH{color:var(--warn)} .m.DELETE{color:var(--danger)}
+  tr.broken td{background:#2a1517}
   .split{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
   @media(max-width:860px){.split{grid-template-columns:1fr}.cart{position:static}}
 </style>
@@ -114,7 +122,8 @@
     <button data-tab="accounts">Аккаунты</button>
     <button data-tab="brandcab">Кабинет бренда</button>
     <button data-tab="storecab">Кабинет магазина</button>
-    <button data-tab="gaps">Чего не хватает в API</button>
+    <button data-tab="routes">Роуты</button>
+    <button data-tab="gaps">Чего не хватает</button>
   </div>
 
   <!-- ================= КАТАЛОГ ================= -->
@@ -128,6 +137,7 @@
             <div class="grow"></div>
             <button id="reloadBrands" class="ghost">Обновить</button>
           </div>
+          <div class="small muted" style="margin-bottom:10px"><code>GET /brand</code> — публичная</div>
           <div id="brandGrid" class="grid cols4"></div>
         </div>
 
@@ -135,16 +145,16 @@
           <div class="row">
             <h2 style="margin:0" id="storeTitle">Магазин</h2>
             <span id="storesSrc" class="tag">—</span>
-            <div class="grow"></div>
-            <select id="storePicker" style="width:auto;min-width:220px"></select>
           </div>
           <div class="small muted" id="storeMeta" style="margin-top:6px"></div>
         </div>
 
         <div id="prodBlock" class="card hide">
           <div class="row" style="margin-bottom:10px">
-            <h2 style="margin:0">Продукты</h2>
+            <h2 style="margin:0">Витрина</h2>
             <span id="prodSrc" class="tag">—</span>
+            <div class="grow"></div>
+            <span class="small muted"><code>GET /brand/{brandId}/products</code></span>
           </div>
           <div id="prodGrid" class="grid cols3"></div>
         </div>
@@ -152,8 +162,10 @@
 
       <div>
         <div class="card cart">
-          <div class="row"><h2 style="margin:0">Корзина</h2><div class="grow"></div>
-            <button id="clearCart" class="ghost small">очистить</button></div>
+          <div class="row"><h2 style="margin:0">Заказ</h2>
+            <span id="orderSrc" class="tag">—</span>
+            <div class="grow"></div>
+            <button id="reloadOrder" class="ghost small">обновить</button></div>
           <div id="cartWho" class="small muted" style="margin:4px 0 8px"></div>
           <div id="cartItems"></div>
           <div class="total"><span>Итого</span><span id="cartTotal">0 ₽</span></div>
@@ -171,7 +183,8 @@
       <div class="card">
         <div class="row"><h2 style="margin:0">Пользователь</h2><div class="grow"></div>
           <span id="userState" class="tag">не залогинен</span></div>
-        <p class="small muted">Покупатель. Номер телефона + пароль.</p>
+        <p class="small muted">Покупатель. Номер телефона + пароль.
+          На регистрации поле называется <code>phone</code>, на входе — <code>number</code>.</p>
         <div class="field"><label>Телефон (8–15 символов)</label><input id="uPhone" value="79990001122"></div>
         <div class="field"><label>Пароль (8–60)</label><input id="uPass" type="text" value="password123"></div>
         <div class="row">
@@ -222,7 +235,7 @@
 
     <div class="card" style="margin-top:14px">
       <h3>Активные токены</h3>
-      <table><thead><tr><th>Роль</th><th>Subject</th><th>Истекает</th><th>Токен</th></tr></thead>
+      <table><thead><tr><th>Роль</th><th>Subject</th><th>brandId</th><th>Истекает</th><th>Токен</th></tr></thead>
       <tbody id="tokTable"></tbody></table>
     </div>
   </section>
@@ -240,7 +253,7 @@
         <div class="field"><label>Пароль (8–64)</label><input id="nsPass" type="text" value="password123"></div>
         <div class="field"><label>Адрес</label><input id="nsAddr" value="Москва, Тверская 1"></div>
         <button id="nsAdd" class="primary">Создать</button>
-        <div class="small muted" style="margin-top:8px"><code>POST /brand/store</code></div>
+        <div class="small muted" style="margin-top:8px"><code>POST /brand/store</code> → <code>{id, email, address}</code></div>
       </div>
       <div class="card">
         <h2>Новый продукт</h2>
@@ -249,7 +262,8 @@
         <div class="field"><label>Категория</label><input id="npCat" value="Бургеры"></div>
         <button id="npAdd" class="primary">Добавить</button>
         <div class="small muted" style="margin-top:8px">
-          <code>POST /brand/product</code> — <b>без картинки</b>, imageUrl бек ставит хардкодом.
+          <code>POST /brand/product</code> — <b>без картинки</b>, imageUrl бек ставит хардкодом
+          <code>/brand/bebend</code>.
         </div>
       </div>
       <div class="card">
@@ -262,10 +276,14 @@
           <tbody id="brandStores"></tbody></table>
         <div class="small muted" style="margin-top:6px"><code>GET /brand/stores</code></div>
 
-        <h3 style="margin:16px 0 4px">Продукты этой сессии</h3>
-        <div class="small muted">Списка продуктов бек пока не отдаёт — страница помнит
-          созданные в localStorage.</div>
-        <table style="margin-top:8px"><tbody id="brandCreated"></tbody></table>
+        <div class="row" style="margin:16px 0 4px"><h3 style="margin:0">Мои продукты</h3>
+          <span id="brandProdsSrc" class="tag">—</span>
+          <div class="grow"></div>
+          <button id="reloadBrandProds" class="ghost small">обновить</button></div>
+        <table><thead><tr><th>id</th><th>название</th><th>категория</th></tr></thead>
+          <tbody id="brandProds"></tbody></table>
+        <div class="small muted" style="margin-top:6px">
+          <code>GET /brand/products</code> — каталог сети, без цен: цена живёт в точке.</div>
       </div>
     </div>
   </section>
@@ -279,7 +297,7 @@
     <div id="storeCab" class="hide grid cols3">
       <div class="card">
         <h2>Завести остаток (stock)</h2>
-        <p class="small muted">Цена продукта живёт здесь. Без stock у товара нет цены.</p>
+        <p class="small muted">Цена продукта живёт здесь. Без stock товара нет на витрине.</p>
         <div class="field"><label>productId</label><input id="stProd" type="number" value="1"></div>
         <div class="field"><label>Количество</label><input id="stQty" type="number" value="20"></div>
         <div class="field"><label>Цена за штуку</label><input id="stPrice" type="number" step="0.01" value="349"></div>
@@ -287,9 +305,31 @@
         <div class="small muted" style="margin-top:8px"><code>POST /store/stock?productId=…</code></div>
       </div>
       <div class="card">
-        <h3>Остатки этой сессии</h3>
-        <table><tbody id="stockCreated"></tbody></table>
+        <div class="row"><h3 style="margin:0">Остатки</h3>
+          <span id="stockSrc" class="tag">—</span></div>
+        <table style="margin-top:8px"><tbody id="stockCreated"></tbody></table>
+        <div class="small muted" style="margin-top:6px">
+          Ручки <code>GET /store/stock</code> нет — таблица собирается из витрины
+          <code>GET /brand/{brandId}/products</code> (brandId берётся из токена магазина)
+          и отфильтрована по своему storeId.</div>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= РОУТЫ ================= -->
+  <section id="tab-routes" class="hide">
+    <div class="card">
+      <div class="row"><h2 style="margin:0">Что реально есть в API</h2>
+        <div class="grow"></div>
+        <button id="probeRoutes" class="ghost small">прозвонить GET-ручки</button></div>
+      <p class="muted small">Собрано по контроллерам ветки <code>refactor/store-model</code>.
+        Context-path — <code>/api/v1</code>, все ответы завёрнуты в
+        <code>ApiResponse { success, data, error, stats }</code>, поэтому в таблице
+        указано содержимое <code>data</code>.</p>
+      <table><thead><tr>
+        <th style="width:60px">метод</th><th style="width:230px">путь</th>
+        <th style="width:90px">доступ</th><th>вход</th><th>data</th><th style="width:70px">проба</th>
+      </tr></thead><tbody id="routeTable"></tbody></table>
     </div>
   </section>
 
@@ -298,7 +338,8 @@
     <div class="card">
       <h2>Чего не хватает на бэкенде</h2>
       <p class="muted small">Всё, что помечено <span class="tag demo">demo</span> на странице,
-        работает на локальных заглушках, потому что ручки нет или она закрыта ролью.</p>
+        работает на локальных заглушках, потому что ручки нет или она сломана.
+        Зелёным — то, что закрыто с прошлого прохода.</p>
       <div id="gapList"></div>
     </div>
   </section>
@@ -322,24 +363,22 @@
 /* ============================================================
    Состояние
    ============================================================ */
-const LS = 'fs_demo_v1';
+const LS = 'fs_demo_v2';
 const state = {
   apiBase: '',
   tokens: { user:null, brand:null, store:null },
   brands: [],
-  stores: {},          // brandId -> [store]
-  products: {},        // brandId -> [product]
-  stocks: {},          // storeId -> { productId: {price, qty} }
-  cart: [],            // {productId, name, price, qty, storeId, brandId}
+  offers: {},          // brandId -> [ProductOfferResponse]
+  order: null,         // OrderInfo с бэкенда
   selectedBrand: null,
   selectedStore: null,
-  demoSeq: { store: -1, product: -1, order: -1 }
+  demoSeq: { order: -1 }
 };
 
 function save(){
   localStorage.setItem(LS, JSON.stringify({
-    apiBase: state.apiBase, tokens: state.tokens, stores: state.stores,
-    products: state.products, stocks: state.stocks, cart: state.cart, demoSeq: state.demoSeq
+    apiBase: state.apiBase, tokens: state.tokens,
+    selectedBrand: state.selectedBrand, demoSeq: state.demoSeq
   }));
 }
 function load(){
@@ -365,17 +404,15 @@ function checkEnv(){
   try { same = new URL(state.apiBase, location.href).origin === location.origin; } catch(e){}
   if (location.protocol.startsWith('http') && same){ el.classList.add('hide'); return; }
   el.classList.remove('hide');
-  el.innerHTML = `<b style="color:var(--danger)">⛔ Страница открыта не из Spring</b>
-    <div class="small" style="margin-top:6px;line-height:1.6">
-      Отдаётся с <code>${esc(location.origin + location.pathname)}</code>,
-      а API — <code>${esc(state.apiBase)}</code>. Origin разные, поэтому запросы либо получают
-      <b>404 от чужого сервера</b> (встроенный веб-сервер IntelliJ — это порт 63342,
-      Live Server — 5500), либо режутся CORS: в проекте он не настроен.
-      <br><br>
-      Правильный адрес — <a href="http://localhost:8080/api/v1/">http://localhost:8080/api/v1/</a>:
-      там страницу раздаёт сам Spring из <code>src/main/resources/static/index.html</code>,
-      и всё становится same-origin.
-    </div>`;
+  el.innerHTML = '<b style="color:var(--danger)">⛔ Страница открыта не из Spring</b>' +
+    '<div class="small" style="margin-top:6px;line-height:1.6">' +
+      'Отдаётся с <code>' + esc(location.origin + location.pathname) + '</code>, ' +
+      'а API — <code>' + esc(state.apiBase) + '</code>. Origin разные, поэтому запросы либо получают ' +
+      '<b>404 от чужого сервера</b> (встроенный веб-сервер IntelliJ — это порт 63342, ' +
+      'Live Server — 5500), либо режутся CORS: в проекте он не настроен.<br><br>' +
+      'Правильный адрес — <a href="http://localhost:8080/api/v1/">http://localhost:8080/api/v1/</a>: ' +
+      'там страницу раздаёт сам Spring из <code>src/main/resources/static/index.html</code>, ' +
+      'и всё становится same-origin.</div>';
 }
 
 /* ============================================================
@@ -408,14 +445,14 @@ async function api(method, path, {body, role, form, query} = {}){
       status: res.status,
       ok: res.ok,
       data: json && 'data' in json ? json.data : json,
-      error: json && json.error ? json.error : (res.ok ? null : (text || res.statusText)),
+      error: json && json.error ? json.error : (res.ok ? null : (text ? text.slice(0,200) : res.statusText)),
       stats: json && json.stats ? json.stats : null
     };
     logLine(res.ok ? 'ok' : 'bad',
-      `${method} ${url} → ${res.status}` + (out.error ? '  ' + out.error : ''));
+      method + ' ' + url + ' → ' + res.status + (out.error ? '  ' + out.error : ''));
     return out;
   } catch (e) {
-    logLine('bad', `${method} ${url} → network error: ${e.message}`);
+    logLine('bad', method + ' ' + url + ' → network error: ' + e.message);
     return {status:0, ok:false, data:null, error:'сеть/CORS: ' + e.message};
   }
 }
@@ -434,71 +471,177 @@ function badge(el, kind, text){
   el.textContent = text;
 }
 
+function esc(s){ return String(s??'').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
 /* ============================================================
    JWT (только для показа, без проверки подписи)
    ============================================================ */
 function decodeJwt(t){
-  try {
-    const p = JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-    return p;
-  } catch(e){ return null; }
+  try { return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }
+  catch(e){ return null; }
+}
+function myId(role){
+  const p = state.tokens[role] && decodeJwt(state.tokens[role]);
+  return p ? Number(p.sub) : null;
+}
+function myBrandId(role){
+  const p = state.tokens[role] && decodeJwt(state.tokens[role]);
+  return p && p.brandId != null ? Number(p.brandId) : null;
+}
+
+/* ============================================================
+   Таблица роутов
+   ============================================================ */
+const ROUTES = [
+  {m:'POST', p:'/user',        a:'public', in:'{phone, password}', out:'{token}'},
+  {m:'POST', p:'/user/login',  a:'public', in:'{number, password}', out:'{token}'},
+
+  {m:'POST', p:'/brand',       a:'public',
+   in:'multipart: request (JSON {name,email,password}) + image (обязательна)', out:'{token}'},
+  {m:'POST', p:'/brand/login', a:'public', in:'{email, password}', out:'{token}'},
+  {m:'GET',  p:'/brand',       a:'public', in:'—', out:'[{id, name, email, imageUrl}]', probe:'/brand'},
+  {m:'GET',  p:'/brand/{brandId}/products', a:'public', in:'—',
+   out:'[{id (stockId), productId, storeId, name, category, availableQuantity, unitPrice, imageUrl}]',
+   note:'витрина: join products × stocks по первой точке бренда'},
+  {m:'POST', p:'/brand/product', a:'BRAND', in:'{externalProductId, name, category}',
+   out:'{id, name, category, imageUrl}'},
+  {m:'POST', p:'/brand/store',   a:'BRAND', in:'{email, password, address}', out:'{id, email, address}'},
+  {m:'GET',  p:'/brand/stores',  a:'BRAND', in:'—', out:'[{id, email, address}]', probe:'/brand/stores', role:'brand'},
+  {m:'GET',  p:'/brand/products',a:'BRAND', in:'—', out:'[{id, name, category, imageUrl}]',
+   probe:'/brand/products', role:'brand'},
+
+  {m:'POST', p:'/store/login', a:'public', in:'{email, password}', out:'{token} (+ brandId в claims)'},
+  {m:'POST', p:'/store/stock?productId=', a:'STORE', in:'{availableQuantity, unitPrice}',
+   out:'{id, storeId, productId, availableQuantity, unitPrice}'},
+
+  {m:'POST', p:'/order/item', a:'USER', in:'{brandId, productId}',
+   out:'OrderInfo { id, brandId, status, orderItems[{id, productId, requestedQuantity}] }',
+   note:'кладёт 1 шт; если позиция уже есть — +1. Создаёт DRAFT, если его нет'},
+  {m:'PATCH',p:'/order/item/{orderItemId}/increment', a:'USER', in:'—', out:'null',
+   note:'потолок MAX_QUANTITY = 10, захардкожен в OrderItem'},
+  {m:'PATCH',p:'/order/item/{orderItemId}/decrement', a:'USER', in:'—', out:'null',
+   note:'на 1 шт удаляет позицию, на последней позиции — весь заказ'},
+  {m:'PATCH',p:'/order/item/{orderItemId}', a:'USER', in:'{requestedQuantity}', out:'null'},
+  {m:'GET',  p:'/order?brandId=', a:'USER', in:'—', out:'OrderInfo',
+   broken:'если черновика нет — OrderNotFoundException → 400, хотя пустая корзина это норма',
+   probe:'/order?brandId=1', role:'user'},
+
+  {m:'GET',  p:'/static/**', a:'public', in:'—', out:'файлы из storage (картинки брендов)'}
+];
+
+function renderRoutes(){
+  document.getElementById('routeTable').innerHTML = ROUTES.map((r,i) =>
+    '<tr class="' + (r.broken?'broken':'') + '">' +
+      '<td><span class="m ' + r.m + '">' + r.m + '</span></td>' +
+      '<td class="m">' + esc(r.p) + '</td>' +
+      '<td><span class="tag ' + (r.a==='public'?'live':'') + '">' + r.a + '</span></td>' +
+      '<td class="small muted">' + esc(r.in) + '</td>' +
+      '<td class="small">' + esc(r.out) +
+        (r.note ? '<div class="muted" style="margin-top:3px">' + esc(r.note) + '</div>' : '') +
+        (r.broken ? '<div class="bad" style="margin-top:3px">⛔ ' + esc(r.broken) + '</div>' : '') +
+      '</td>' +
+      '<td id="probe' + i + '" class="small muted">' + (r.probe ? '—' : '') + '</td>' +
+    '</tr>').join('');
+}
+
+async function probeRoutes(){
+  for (let i=0;i<ROUTES.length;i++){
+    const r = ROUTES[i];
+    if (!r.probe) continue;
+    const cell = document.getElementById('probe'+i);
+    cell.textContent = '…';
+    const res = await api('GET', r.probe, r.role ? {role:r.role} : {});
+    cell.innerHTML = '<span class="tag ' + (res.ok?'live':'err') + '">' + (res.status||'нет') + '</span>';
+  }
 }
 
 /* ============================================================
    Список пробелов в API
    ============================================================ */
 const GAPS = [
-  { crit:true, t:'Нет публичного списка точек бренда',
-    d:'Нужен <code>GET /catalog/brands/{brandId}/stores</code> — именно с id в пути, ' +
-      'потому что спрашивает покупатель: бренд он выбирает мышкой, в его principal только ' +
-      'userId. Бренду для своего кабинета нужна отдельная <code>GET /brand/stores</code> ' +
-      'уже <b>без</b> id — он лежит в BrandPrincipal. Каталог обязан жить вне ' +
-      '<code>/brand/**</code>: этот префикс закрыт ролью BRAND. ' +
-      'Страница берёт точки из localStorage (созданные в кабинете бренда).' },
-  { crit:true, t:'Нет списка продуктов/витрины',
-    d:'Нужен <code>GET /catalog/stores/{storeId}/products</code> — join ' +
-      '<code>products × stocks</code>, цена принадлежит точке, а не сети. ' +
-      'Сейчас продукты можно только создавать. <code>/store/**</code> требует роль STORE, ' +
-      'то есть под этим префиксом витрину покупателю не отдать.' },
-  { crit:true, t:'Заказ нельзя создать',
-    d:'<code>OrderController.createOrder</code> и <code>addItem</code> закомментированы, ' +
-      'как и <code>increment</code>. Живой остался только ' +
-      '<code>PATCH /order/items/{id}/decrement</code>. Корзина на странице целиком локальная.' },
+  { done:true, t:'Витрина продуктов — есть',
+    d:'<code>GET /brand/{brandId}/products</code> публичная, отдаёт join ' +
+      '<code>products × stocks</code> с ценой и остатком. Страница берёт витрину оттуда. ' +
+      'Осталось: точка выбирается как <code>stores.getFirst()</code>, покупатель на неё не влияет.' },
+  { done:true, t:'Списки в кабинетах — есть',
+    d:'<code>GET /brand/stores</code> и <code>GET /brand/products</code>, обе — id из ' +
+      'BrandPrincipal, без id в пути. <code>AddStoreResponse</code> теперь отдаёт ' +
+      '<code>id</code>, лишний round-trip ушёл.' },
+  { done:true, t:'Заказ можно собрать',
+    d:'<code>POST /order/item</code>, <code>increment</code>, <code>decrement</code>, ' +
+      'установка количества — всё живое и переписано под пару Product + Stock. ' +
+      'Корзина на странице больше не локальная.' },
+
+  { done:true, t:'GET /order отдаёт DTO',
+    d:'<code>OrderInfo { id, brandId, status, orderItems }</code> вместо сущности: ' +
+      'рекурсия <code>Order → orderItems → order</code> у Jackson ушла, <code>version</code> ' +
+      'наружу больше не течёт. <code>userId</code> и <code>storeId</code> из ответа убраны — ' +
+      'первый есть в токене, второй в черновике всегда null.' },
+  { done:true, t:'/order/** закрыт ролью USER',
+    d:'Раньше попадал под <code>/** → authenticated</code>, и токен бренда проходил security, ' +
+      'а <code>@AuthenticationPrincipal UserPrincipal</code> ловил <code>BrandPrincipal</code> ' +
+      '→ 500 вместо 403.' },
+  { done:true, t:'Слэш у setItemQuantity убран',
+    d:'<code>@PatchMapping("/item/{orderItemId}")</code>. Раньше слэш был частью маппинга, ' +
+      'и <code>PATCH /order/item/5</code> давал 404: в Spring 6+ trailing-slash match выключен.' },
+
+  { crit:true, t:'Пустой заказ — это ошибка 400',
+    d:'<code>getOrder</code> кидает <code>OrderNotFoundException</code>, обработчик отдаёт ' +
+      '<code>badRequest</code>. Но «у покупателя пока нет черновика» — нормальное состояние ' +
+      'при первой загрузке страницы, а не ошибка ввода. Нужен 200 с пустым заказом ' +
+      '(или 404, но никак не 400).' },
   { crit:true, t:'Нет оплаты',
-    d:'В <code>OrderStatus</code> нет статуса PAID (DRAFT → PENDING → …), и нет ручки ' +
-      '<code>POST /order/{id}/pay</code>. Кнопка «Оплатить» рисует чек локально.' },
-  { t:'Нет GET корзины / текущего заказа',
-    d:'Даже когда addItem вернут, нужен <code>GET /order/current?storeId=…</code>, ' +
-      'иначе после F5 корзина теряется.' },
-  { t:'Магазин не может зарегистрироваться сам',
-    d:'В <code>StoreController</code> висит <code>// потом тут будет register</code>. ' +
-      'Точку создаёт только бренд, и <code>AddStoreResponse</code> не отдаёт ни ' +
-      '<code>id</code>, ни токен — страница не знает id созданной точки.' },
-  { t:'AddStoreResponse без id',
-    d:'Возвращается только email + address. Чтобы завести stock, нужен <code>storeId</code> — ' +
-      'приходится логиниться магазином и доставать id из JWT.' },
-  { t:'У продукта нет картинки и цены',
-    d:'<code>BrandService.IMAGE_URL = "/brand/bebend"</code> — хардкод-заглушка, ' +
-      'загрузки файла для продукта нет (у бренда есть). Цена лежит в <code>stocks</code>, ' +
-      'то есть без залогиненного магазина продукт бесценен.' },
+    d:'В <code>OrderStatus</code> нет <code>PAID</code>, ручки <code>POST /order/{id}/pay</code> ' +
+      'тоже нет. Заодно нужно: списать <code>Stock.availableQuantity</code>, ' +
+      'зафиксировать <code>OrderItem.unitPrice</code>, посчитать сумму. Кнопка рисует чек локально.' },
+
+  { t:'OrderItem не хранит снапшот товара',
+    d:'Колонки <code>name</code>, <code>unit_price</code>, <code>category</code>, ' +
+      '<code>external_product_id</code> в <code>order_items</code> есть, но заполняет их только ' +
+      'мёртвый <code>OrderItem.from(...)</code>. Живой конструктор ' +
+      '<code>OrderItem(order, productId)</code> кладёт только id и количество. ' +
+      'Поэтому страница дотягивает название и цену из витрины по <code>productId</code>.' },
+  { t:'Заказ привязан к бренду, а цена — к точке',
+    d:'Ключ черновика — <code>(userId, brandId)</code>, поле <code>Order.storeId</code> ' +
+      'никто не заполняет, в ответе оно всегда <code>null</code>. Цена же лежит в ' +
+      '<code>stocks(store_id, product_id)</code>. Пока покупатель не выбирает точку, ' +
+      'заказ не может сам посчитать сумму.' },
+  { t:'Черновик ищется без учёта статуса',
+    d:'<code>findByUserIdAndBrandId</code> вернёт и уже доставленный заказ. После первой ' +
+      'же покупки <code>addOrderItem</code> найдёт его и навсегда упрётся в ' +
+      '<code>OrderUnmodifiableException</code>. Нужен ' +
+      '<code>findByUserIdAndBrandIdAndStatus(..., DRAFT)</code>.' },
+  { t:'MAX_QUANTITY = 10 не связан с остатком',
+    d:'Потолок позиции захардкожен в <code>OrderItem</code>. Можно набрать 10 штук того, ' +
+      'чего в <code>Stock.availableQuantity</code> лежит 3.' },
+  { t:'Нет публичного списка точек бренда',
+    d:'<code>GET /brand/stores</code> закрыта ролью BRAND, а покупателю точки нужны, чтобы ' +
+      'выбрать, откуда везти. Сейчас страница знает только тот <code>storeId</code>, который ' +
+      'приехал внутри витрины.' },
   { t:'Нет GET /store/stock',
-    d:'Остатки можно только создавать. Прочитать цену/количество неоткуда.' },
+    d:'Остаток можно завести, но не прочитать. Кабинет магазина собирает свои остатки ' +
+      'из публичной витрины бренда и фильтрует по своему storeId — это обход, а не решение.' },
+  { t:'У продукта нет картинки',
+    d:'<code>BrandService.IMAGE_URL = "/brand/bebend"</code> проставляется каждому продукту. ' +
+      'Это не URL. У бренда загрузка через <code>FileStorageService</code> уже работает — ' +
+      'для продукта нужен такой же multipart.' },
+  { t:'Нет базовых read-ручек',
+    d:'Нет <code>GET /brand/{id}</code>, <code>GET /user/me</code>, истории заказов. ' +
+      '<code>GET /brand</code> живёт в контроллере кабинета, хотя это каталожная ручка.' },
   { t:'CORS не настроен',
-    d:'Ни <code>@CrossOrigin</code>, ни <code>http.cors()</code>. Пока фронт живёт внутри ' +
-      'того же Spring — ок, отдельный dev-сервер (Vite и т.п.) не заведётся.' },
-  { t:'Статика закрыта security',
-    d:'В <code>SecurityConfig</code> правило <code>/**</code> → authenticated, поэтому даже ' +
-      'index.html отдавался 401. Добавил permitAll на <code>/</code> и <code>/index.html</code>.' },
-  { t:'Списков нет нигде',
-    d:'Ни <code>GET /brand/{id}</code>, ни <code>GET /user/me</code>, ни истории заказов. ' +
-      'Есть только <code>GET /brand</code> — и это, по сути, каталожная ручка, ' +
-      'живущая в контроллере кабинета: её место <code>GET /catalog/brands</code>.' }
+    d:'Ни <code>@CrossOrigin</code>, ни <code>http.cors(...)</code>. Пока фронт внутри того же ' +
+      'Spring — ок, отдельный dev-сервер не заведётся.' },
+  { t:'ddl-auto=update при включённом Flyway',
+    d:'<code>application.properties</code>: Hibernate дописывает схему мимо миграций, ' +
+      'в живой базе <code>NUMERIC(38,2)</code> вместо <code>NUMERIC(19,2)</code> из ' +
+      '<code>V1__init_schema.sql</code>. Правильно — <code>validate</code> и <code>V2__…</code>.' }
 ];
 
 function renderGaps(){
   document.getElementById('gapList').innerHTML = GAPS.map(g =>
-    `<div class="gap ${g.crit?'crit':''}"><b>${g.crit?'⛔':'⚠️'} ${g.t}</b>
-     <div class="small muted" style="margin-top:3px">${g.d}</div></div>`).join('');
+    '<div class="gap ' + (g.crit?'crit':'') + (g.done?'done':'') + '"><b>' +
+      (g.done?'✅':(g.crit?'⛔':'⚠️')) + ' ' + g.t + '</b>' +
+    '<div class="small muted" style="margin-top:3px">' + g.d + '</div></div>').join('');
 }
 
 /* ============================================================
@@ -517,7 +660,7 @@ function renderAuth(){
     if (!t) badge(el, '', 'не залогинен');
     else {
       const p = decodeJwt(t);
-      badge(el, 'live', p ? `id=${p.sub}` : 'токен есть');
+      badge(el, 'live', p ? 'id=' + p.sub : 'токен есть');
     }
   }
   document.getElementById('tokTable').innerHTML = Object.entries(state.tokens)
@@ -525,20 +668,18 @@ function renderAuth(){
       const p = decodeJwt(t) || {};
       const exp = p.exp ? new Date(p.exp*1000).toLocaleTimeString() : '—';
       const dead = p.exp && p.exp*1000 < Date.now();
-      return `<tr><td>${role}</td><td>${p.sub||'—'} <span class="muted small">${p.subjectType||''}</span></td>
-        <td class="${dead?'bad':''}">${exp}${dead?' (протух)':''}</td>
-        <td class="small muted" style="max-width:280px;overflow:hidden;text-overflow:ellipsis">${t.slice(0,42)}…</td></tr>`;
-    }).join('') || '<tr><td colspan="4" class="muted small">пусто</td></tr>';
+      return '<tr><td>' + role + '</td><td>' + (p.sub||'—') +
+        ' <span class="muted small">' + (p.subjectType||'') + '</span></td>' +
+        '<td class="muted small">' + (p.brandId != null ? p.brandId : '—') + '</td>' +
+        '<td class="' + (dead?'bad':'') + '">' + exp + (dead?' (протух)':'') + '</td>' +
+        '<td class="small muted" style="max-width:240px;overflow:hidden;text-overflow:ellipsis">' +
+        t.slice(0,42) + '…</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="muted small">пусто</td></tr>';
 
   document.getElementById('brandCab').classList.toggle('hide', !state.tokens.brand);
   document.getElementById('brandCabLocked').classList.toggle('hide', !!state.tokens.brand);
   document.getElementById('storeCab').classList.toggle('hide', !state.tokens.store);
   document.getElementById('storeCabLocked').classList.toggle('hide', !!state.tokens.store);
-}
-
-function myId(role){
-  const p = state.tokens[role] && decodeJwt(state.tokens[role]);
-  return p ? Number(p.sub) : null;
 }
 
 /* сгенерировать PNG-заглушку, т.к. image в POST /brand обязателен */
@@ -561,10 +702,10 @@ async function loadBrands(){
   const el = document.getElementById('brandsSrc');
   if (res.ok && Array.isArray(res.data)){
     state.brands = res.data;
-    badge(el, 'live', `backend · ${res.data.length}`);
+    badge(el, 'live', 'backend · ' + res.data.length);
   } else {
     state.brands = [];
-    badge(el, 'err', res.status ? `ошибка ${res.status}` : 'нет связи');
+    badge(el, 'err', res.status ? 'ошибка ' + res.status : 'нет связи');
   }
   renderBrands();
 }
@@ -579,231 +720,254 @@ function imgUrl(u){
 function renderBrands(){
   const grid = document.getElementById('brandGrid');
   if (!state.brands.length){
-    grid.innerHTML = `<div class="muted small">Брендов нет. Заведи бренд на вкладке «Аккаунты».</div>`;
+    grid.innerHTML = '<div class="muted small">Брендов нет. Заведи бренд на вкладке «Аккаунты».</div>';
     return;
   }
   grid.innerHTML = state.brands.map(b => {
     const u = imgUrl(b.imageUrl);
-    return `<div class="card brand ${state.selectedBrand===b.id?'on':''}" data-brand="${b.id}">
-      <div class="thumb">${u ? `<img src="${u}" alt="" onerror="this.replaceWith(document.createTextNode('🍔'))">` : '🍔'}</div>
-      <div class="body"><b>${esc(b.name)}</b>
-        <div class="small muted">${esc(b.email||'')}</div>
-        <div class="small muted">id ${b.id}</div></div>
-    </div>`;
+    return '<div class="card brand ' + (state.selectedBrand===b.id?'on':'') + '" data-brand="' + b.id + '">' +
+      '<div class="thumb">' + (u ? '<img src="' + u + '" alt="" onerror="this.replaceWith(document.createTextNode(\'🍔\'))">' : '🍔') + '</div>' +
+      '<div class="body"><b>' + esc(b.name) + '</b>' +
+        '<div class="small muted">' + esc(b.email||'') + '</div>' +
+        '<div class="small muted">id ' + b.id + '</div></div></div>';
   }).join('');
   grid.querySelectorAll('[data-brand]').forEach(n =>
     n.onclick = () => openBrand(Number(n.dataset.brand)));
 }
 
-function esc(s){ return String(s??'').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
-
-/* точки бренда: ручки нет — берём локальные, иначе демо-точка */
-async function getStores(brandId){
-  /* свой бренд — точки отдаёт кабинетная ручка, id из токена */
-  if (state.tokens.brand && myId('brand') === brandId){
-    const mine = await api('GET', '/brand/stores', {role:'brand'});
-    if (mine.ok && Array.isArray(mine.data) && mine.data.length){
-      state.stores[brandId] = mine.data; save();
-      return {src:'live', list:mine.data};
-    }
+/* Витрина: единственная публичная ручка с ценой и остатком */
+async function loadOffers(brandId){
+  const el = document.getElementById('prodSrc');
+  const res = await api('GET', '/brand/' + brandId + '/products');
+  if (res.ok && Array.isArray(res.data)){
+    state.offers[brandId] = res.data;
+    badge(el, 'live', 'backend · ' + res.data.length);
+  } else {
+    state.offers[brandId] = [];
+    badge(el, 'err', res.status ? (res.status + ': ' + (res.error||'')) : 'нет связи');
   }
-  /* чужой/анонимный просмотр — публичной ручки пока нет */
-  const res = await api('GET', `/catalog/brands/${brandId}/stores`);   // ожидаемо 404
-  if (res.ok && Array.isArray(res.data) && res.data.length) return {src:'live', list:res.data};
-  const local = state.stores[brandId] || [];
-  if (local.length) return {src:'local', list:local};
-  return {src:'demo', list:[{id:state.demoSeq.store--, address:'Демо-точка (бек не отдаёт список)', email:'—', demo:true}]};
+  return state.offers[brandId];
 }
 
-/* продукты бренда: ручки нет — локальные, иначе демо-набор */
-async function getProducts(brandId){
-  const res = await api('GET', `/catalog/stores/${state.selectedStore}/products`);
-  if (res.ok && Array.isArray(res.data) && res.data.length) return {src:'live', list:res.data};
-  const local = state.products[brandId] || [];
-  if (local.length) return {src:'local', list:local};
-  return {src:'demo', list:[
-    {id:state.demoSeq.product--, name:'Демо-бургер',  category:'Бургеры', demo:true},
-    {id:state.demoSeq.product--, name:'Демо-картошка',category:'Гарниры', demo:true},
-    {id:state.demoSeq.product--, name:'Демо-кола',    category:'Напитки', demo:true}
-  ]};
-}
-
-function priceOf(storeId, productId){
-  const s = state.stocks[storeId];
-  if (s && s[productId]) return {price:Number(s[productId].price), qty:s[productId].qty, real:true};
-  return {price: 199 + (Math.abs(productId)*37) % 300, qty: 99, real:false};
+function offerFor(productId){
+  const list = state.offers[state.selectedBrand] || [];
+  return list.find(o => o.productId === productId) || null;
 }
 
 async function openBrand(brandId){
   state.selectedBrand = brandId;
+  save();
   renderBrands();
-  const brand = state.brands.find(b=>b.id===brandId) || {name:'бренд '+brandId};
+  const brand = state.brands.find(b=>b.id===brandId) || {name:'бренд ' + brandId};
 
-  const st = await getStores(brandId);
-  const stores = st.list;
-  state.selectedStore = stores[0] ? stores[0].id : null;      // «первый магазин бренда»
+  const offers = await loadOffers(brandId);
+
+  /* точки: публичной ручки нет. storeId единственной обслуживающей точки приезжает
+     внутри витрины — бек сам взял stores.getFirst(). Адрес знает только сам бренд. */
+  const storeIds = [...new Set(offers.map(o => o.storeId))];
+  state.selectedStore = storeIds[0] ?? null;
+
+  let addr = null, src = 'demo';
+  if (state.tokens.brand && myId('brand') === brandId){
+    const mine = await api('GET', '/brand/stores', {role:'brand'});
+    if (mine.ok && Array.isArray(mine.data)){
+      const s = mine.data.find(x => x.id === state.selectedStore);
+      if (s){ addr = s.address; src = 'live'; }
+    }
+  }
 
   document.getElementById('storeBlock').classList.remove('hide');
   document.getElementById('storeTitle').textContent = brand.name;
-  badge(document.getElementById('storesSrc'),
-        st.src==='live'?'live':'demo',
-        st.src==='live'?'backend':(st.src==='local'?'локально созданные':'заглушка'));
-  const picker = document.getElementById('storePicker');
-  picker.innerHTML = stores.map(s =>
-    `<option value="${s.id}">#${s.id} · ${esc(s.address||'')}</option>`).join('');
-  picker.value = state.selectedStore;
-  picker.onchange = async () => {          // витрина зависит от точки — перезапрашиваем
-    state.selectedStore = Number(picker.value);
-    await loadProducts(brandId);
-  };
-  document.getElementById('storeMeta').innerHTML =
-    `Показывается первая точка бренда. ${stores.length} шт. ` +
-    (st.src!=='live' ? '<b>Ручки списка точек в API нет.</b>' : '');
+  badge(document.getElementById('storesSrc'), src==='live'?'live':'demo',
+        src==='live' ? 'адрес из /brand/stores' : 'только storeId из витрины');
+  document.getElementById('storeMeta').innerHTML = state.selectedStore == null
+    ? 'У бренда нет точек с остатками — витрина пустая. Заведи точку в кабинете бренда и остаток в кабинете магазина.'
+    : 'Точка <b>#' + state.selectedStore + '</b>' + (addr ? ' · ' + esc(addr) : '') +
+      '. Выбрать её нельзя: бек сам берёт <code>stores.getFirst()</code>, ' +
+      'а публичного списка точек бренда нет.';
 
-  await loadProducts(brandId);
-}
-
-async function loadProducts(brandId){
-  const pr = await getProducts(brandId);
-  state.currentProducts = pr.list;
-  badge(document.getElementById('prodSrc'),
-        pr.src==='live'?'live':'demo',
-        pr.src==='live'?'backend':(pr.src==='local'?'локально созданные':'заглушка'));
   document.getElementById('prodBlock').classList.remove('hide');
   renderProducts();
+  await loadOrder();
+}
+
+function orderItemFor(productId){
+  const items = (state.order && state.order.orderItems) || [];
+  return items.find(i => i.productId === productId) || null;
 }
 
 function renderProducts(){
-  const list = state.currentProducts || [];
+  const list = state.offers[state.selectedBrand] || [];
   const grid = document.getElementById('prodGrid');
-  grid.innerHTML = list.map(p => {
-    const {price, qty, real} = priceOf(state.selectedStore, p.id);
-    return `<div class="card prod" data-p="${p.id}">
-      <div class="thumb" style="height:80px;font-size:28px;border-radius:8px">🍟</div>
-      <div><b>${esc(p.name)}</b>
-        <div class="small muted">${esc(p.category||'без категории')} · id ${p.id}</div></div>
-      <div class="row"><span class="price">${price.toFixed(2)} ₽</span>
-        <span class="tag ${real?'live':'demo'}">${real?'stock':'цена-заглушка'}</span></div>
-      <div class="small muted">в наличии: ${qty}</div>
-      <div class="stepper">
-        <button data-act="minus">−</button>
-        <input type="number" min="1" max="${qty}" value="1" data-qty>
-        <button data-act="plus">+</button>
-      </div>
-      <button class="primary" data-act="add">В корзину</button>
-    </div>`;
-  }).join('') || '<div class="muted small">Продуктов нет.</div>';
+  grid.innerHTML = list.map(o => {
+    const out  = !o.availableQuantity;
+    const item = orderItemFor(o.productId);
+    /* товар уже в заказе — карточка правит живую позицию, а не набирает количество заранее */
+    const control = item
+      ? '<div class="stepper">' +
+          '<button data-item="' + item.id + '" data-act="decrement">−</button>' +
+          '<input value="' + item.requestedQuantity + '" disabled>' +
+          '<button data-item="' + item.id + '" data-act="increment">+</button></div>' +
+        '<div class="small muted">в заказе · позиция #' + item.id + '</div>'
+      : '<button class="primary" data-act="add"' + (out?' disabled':'') + '>В корзину</button>';
+    return '<div class="card prod ' + (out?'out':'') + '" data-p="' + o.productId + '">' +
+      '<div class="thumb" style="height:80px;font-size:28px;border-radius:8px">🍟</div>' +
+      '<div><b>' + esc(o.name) + '</b>' +
+        '<div class="small muted">' + esc(o.category||'без категории') +
+        ' · product #' + o.productId + ' · stock #' + o.id + '</div></div>' +
+      '<div class="row"><span class="price">' + Number(o.unitPrice).toFixed(2) + ' ₽</span>' +
+        '<span class="tag live">stock</span></div>' +
+      '<div class="small muted">в наличии: ' + o.availableQuantity + '</div>' +
+      control + '</div>';
+  }).join('') || '<div class="muted small">Витрина пустая: у бренда нет точек либо у точки нет остатков.</div>';
 
-  grid.querySelectorAll('[data-p]').forEach(card => {
-    const id = Number(card.dataset.p);
-    const inp = card.querySelector('[data-qty]');
-    const max = Number(inp.max) || 999;
-    card.querySelector('[data-act=minus]').onclick = () =>
-      inp.value = Math.max(1, (parseInt(inp.value)||1) - 1);
-    card.querySelector('[data-act=plus]').onclick = () =>
-      inp.value = Math.min(max, (parseInt(inp.value)||1) + 1);
-    inp.onchange = () => {
-      let v = parseInt(inp.value)||1;
-      inp.value = Math.min(max, Math.max(1, v));
-    };
-    card.querySelector('[data-act=add]').onclick = () =>
-      addToCart(id, Math.max(1, parseInt(inp.value)||1));
-  });
+  grid.querySelectorAll('[data-act=add]').forEach(b =>
+    b.onclick = () => addToCart(Number(b.closest('[data-p]').dataset.p)));
+  grid.querySelectorAll('[data-item]').forEach(b =>
+    b.onclick = () => step(Number(b.dataset.item), b.dataset.act));
 }
 
 /* ============================================================
-   Корзина (полностью локальная — см. GAPS)
+   Заказ — настоящий, с бэкенда
    ============================================================ */
-async function addToCart(productId, qty){
-  const p = (state.currentProducts||[]).find(x=>x.id===productId);
-  if (!p) return;
-  const {price} = priceOf(state.selectedStore, productId);
+async function loadOrder(){
+  const el = document.getElementById('orderSrc');
+  if (!state.tokens.user){ state.order = null; badge(el,'','нужен токен user'); renderOrderViews(); return; }
+  if (state.selectedBrand == null){ state.order = null; badge(el,'','бренд не выбран'); renderOrderViews(); return; }
 
-  /* пробуем настоящую ручку — её нет, но пусть будет видно в логе */
-  const res = await api('POST', '/order/add-item', {
-    role:'user', query:{storeId: state.selectedStore, productId}
-  });
+  const res = await api('GET', '/order', {role:'user', query:{brandId: state.selectedBrand}});
 
-  const line = state.cart.find(c => c.productId===productId && c.storeId===state.selectedStore);
-  if (line) line.qty += qty;
-  else state.cart.push({productId, name:p.name, price, qty,
-                        storeId: state.selectedStore, brandId: state.selectedBrand});
-  save(); renderCart();
-  if (res.ok) toast(`«${p.name}» ушёл в заказ на бэкенде`);
-  else toast(`«${p.name}» ×${qty} — локально (POST /order/add-item ${res.status||'нет'})`, 'warnc');
+  if (res.ok && res.data){
+    state.order = res.data;
+    badge(el, 'live', 'backend #' + (res.data.id ?? '?'));
+  } else if (res.status === 400 || res.status === 404){
+    /* черновика нет — для бека это OrderNotFoundException, для страницы просто пустая корзина */
+    state.order = null;
+    badge(el, '', 'черновика нет (' + res.status + ')');
+  } else {
+    state.order = null;
+    badge(el, 'err', res.status ? 'GET /order → ' + res.status : 'нет связи');
+  }
+  renderOrderViews();
+}
+
+function renderOrderViews(){ renderProducts(); renderCart(); }
+
+/* Единственное место, где состояние заказа обновляется после мутации.
+   Ручка вернула OrderInfo — берём его и больше никуда не ходим.
+   Вернула null — приходится переспрашивать отдельным GET. Когда increment/decrement/
+   setQuantity начнут отдавать OrderInfo, этот GET исчезнет сам, править тут нечего. */
+async function applyOrder(res){
+  if (res && res.ok && res.data && Array.isArray(res.data.orderItems)){
+    state.order = res.data;
+    badge(document.getElementById('orderSrc'), 'live', 'backend #' + (res.data.id ?? '?'));
+    renderOrderViews();
+    return;
+  }
+  await loadOrder();
+}
+
+async function addToCart(productId){
+  if (!state.tokens.user){ toast('Сначала войди как пользователь', 'bad'); switchTab('accounts'); return; }
+
+  /* ровно один запрос: POST уже возвращает OrderInfo, переспрашивать нечего */
+  const res = await api('POST', '/order/item',
+    {role:'user', body:{brandId: state.selectedBrand, productId}});
+  if (!res.ok){ toast('В корзину: ' + res.error, 'bad'); return; }
+
+  await applyOrder(res);
+  const o = offerFor(productId);
+  toast('«' + (o ? o.name : 'product #' + productId) + '» в заказе');
+}
+
+async function step(orderItemId, dir){
+  const res = await api('PATCH', '/order/item/' + orderItemId + '/' + dir, {role:'user'});
+  if (!res.ok) toast(dir + ': ' + res.error, 'bad');
+  await applyOrder(res);
+}
+
+/* строка заказа: имя и цену бек в OrderItemInfo не отдаёт — тянем из витрины */
+function lineOf(item){
+  const o = offerFor(item.productId);
+  return {
+    name:  item.name ?? (o ? o.name : 'product #' + item.productId),
+    price: item.unitPrice != null ? Number(item.unitPrice) : (o ? Number(o.unitPrice) : null),
+    fromCatalog: item.unitPrice == null
+  };
 }
 
 function renderCart(){
   const box = document.getElementById('cartItems');
-  if (!state.cart.length){
+  const items = (state.order && state.order.orderItems) || [];
+  const payBtn = document.getElementById('payBtn');
+
+  if (!items.length){
     box.innerHTML = '<div class="muted small">Пусто</div>';
     document.getElementById('cartTotal').textContent = '0 ₽';
     document.getElementById('cartWho').textContent = '';
-    document.getElementById('payBtn').disabled = true;
+    payBtn.disabled = true;
     return;
   }
-  const storeId = state.cart[0].storeId;
+
+  const o = state.order;
+  const editable = !o.status || o.status === 'DRAFT';
   document.getElementById('cartWho').innerHTML =
-    `точка #${storeId} · <span class="tag demo">корзина локальная</span>`;
-  box.innerHTML = state.cart.map((c,i) => `
-    <div class="citem">
-      <div class="grow"><b class="small">${esc(c.name)}</b>
-        <div class="small muted">${c.price.toFixed(2)} ₽ × ${c.qty}</div></div>
-      <div class="stepper">
-        <button data-i="${i}" data-act="m">−</button>
-        <button data-i="${i}" data-act="p">+</button>
-        <button data-i="${i}" data-act="x">×</button>
-      </div>
-    </div>`).join('');
-  box.querySelectorAll('button').forEach(b => b.onclick = () => {
-    const i = Number(b.dataset.i);
-    if (b.dataset.act==='p') state.cart[i].qty++;
-    if (b.dataset.act==='m' && --state.cart[i].qty <= 0) state.cart.splice(i,1);
-    if (b.dataset.act==='x') state.cart.splice(i,1);
-    save(); renderCart();
-  });
-  const total = state.cart.reduce((s,c)=>s + c.price*c.qty, 0);
-  document.getElementById('cartTotal').textContent = total.toFixed(2) + ' ₽';
-  document.getElementById('payBtn').disabled = false;
+    'заказ #' + o.id + ' · <span class="tag ' + (editable?'live':'demo') + '">' + (o.status||'?') + '</span>' +
+    ' · бренд ' + (o.brandId ?? state.selectedBrand) +
+    (o.storeId == null ? ' · <span class="tag demo">storeId = null</span>' : ' · точка #' + o.storeId);
+
+  let total = 0, guessed = false;
+  box.innerHTML = items.map(it => {
+    const l = lineOf(it);
+    if (l.price == null) guessed = true; else total += l.price * it.requestedQuantity;
+    if (l.fromCatalog && l.price != null) guessed = true;
+    return '<div class="citem">' +
+      '<div class="grow"><b class="small">' + esc(l.name) + '</b>' +
+        '<div class="small muted">' +
+          (l.price == null ? 'цена неизвестна' : l.price.toFixed(2) + ' ₽') +
+          ' × ' + it.requestedQuantity +
+          (l.fromCatalog ? ' <span class="tag demo">из витрины</span>' : '') +
+        '</div></div>' +
+      '<div class="stepper">' +
+        '<button data-i="' + it.id + '" data-act="decrement"' + (editable?'':' disabled') + '>−</button>' +
+        '<button data-i="' + it.id + '" data-act="increment"' + (editable?'':' disabled') + '>+</button>' +
+      '</div></div>';
+  }).join('');
+
+  box.querySelectorAll('button[data-i]').forEach(b =>
+    b.onclick = () => step(Number(b.dataset.i), b.dataset.act));
+
+  document.getElementById('cartTotal').innerHTML = total.toFixed(2) + ' ₽' +
+    (guessed ? ' <span class="tag demo">счёт на клиенте</span>' : '');
+  payBtn.disabled = !editable;
 }
 
 async function pay(){
-  if (!state.cart.length) return;
-  if (!state.tokens.user){
-    toast('Сначала войди как пользователь', 'bad');
-    switchTab('accounts'); return;
-  }
-  const storeId = state.cart[0].storeId;
-  const total = state.cart.reduce((s,c)=>s + c.price*c.qty, 0);
+  const items = (state.order && state.order.orderItems) || [];
+  if (!items.length) return;
+  let total = 0;
+  items.forEach(it => { const l = lineOf(it); if (l.price != null) total += l.price * it.requestedQuantity; });
 
-  /* реальные попытки — обе ручки отсутствуют */
-  const created = await api('POST', '/order', {
-    role:'user',
-    body:{ storeId, lines: state.cart.map(c=>({menuItemId:c.productId, quantity:c.qty})) }
-  });
-  let orderId = created.ok && created.data ? created.data.id : null;
-  let paid = null;
-  if (orderId) paid = await api('POST', `/order/${orderId}/pay`, {role:'user'});
+  const orderId = state.order.id;
+  const paid = await api('POST', '/order/' + orderId + '/pay', {role:'user'});
 
-  if (paid && paid.ok){
-    toast(`Заказ #${orderId} оплачен на бэкенде`);
+  if (paid.ok){
+    toast('Заказ #' + orderId + ' оплачен на бэкенде');
     document.getElementById('payNote').innerHTML =
-      `<span class="tag live">backend</span> заказ #${orderId} оплачен`;
+      '<span class="tag live">backend</span> заказ #' + orderId + ' оплачен';
   } else {
-    orderId = orderId || state.demoSeq.order--;
-    toast(`Заказ ${orderId} «оплачен» локально на ${total.toFixed(2)} ₽`, 'warnc');
+    toast('Заказ #' + orderId + ' «оплачен» локально на ' + total.toFixed(2) + ' ₽', 'warnc');
     document.getElementById('payNote').innerHTML =
-      `<span class="tag demo">demo</span> чек ${orderId} на <b>${total.toFixed(2)} ₽</b>, ` +
-      `${state.cart.length} позиц. — ручек <code>POST /order</code> и ` +
-      `<code>POST /order/{id}/pay</code> в API нет.`;
+      '<span class="tag demo">demo</span> чек по заказу #' + orderId + ' на <b>' + total.toFixed(2) + ' ₽</b>, ' +
+      items.length + ' позиц. — ручки <code>POST /order/{id}/pay</code> в API нет (' + (paid.status||'нет связи') + '), ' +
+      'заказ остался в статусе ' + (state.order.status||'DRAFT') + ', остатки не списаны.';
   }
-  state.cart = []; save(); renderCart();
+  await loadOrder();
 }
 
 /* ============================================================
    Кабинеты
    ============================================================ */
-/* Точки бренда — настоящая ручка, id бренда берётся из токена */
 async function loadBrandStores(){
   const el = document.getElementById('brandStoresSrc');
   const tb = document.getElementById('brandStores');
@@ -811,34 +975,57 @@ async function loadBrandStores(){
 
   const res = await api('GET', '/brand/stores', {role:'brand'});
   if (res.ok && Array.isArray(res.data)){
-    badge(el, 'live', `backend · ${res.data.length}`);
-    state.stores[myId('brand')] = res.data;
-    save();
+    badge(el, 'live', 'backend · ' + res.data.length);
     tb.innerHTML = res.data.map(s =>
-      `<tr><td>#${s.id}</td><td>${esc(s.address)}</td>
-           <td class="muted small">${esc(s.email||'')}</td></tr>`).join('')
+      '<tr><td>#' + s.id + '</td><td>' + esc(s.address) + '</td>' +
+      '<td class="muted small">' + esc(s.email||'') + '</td></tr>').join('')
       || '<tr><td colspan="3" class="muted small">точек ещё нет</td></tr>';
     return res.data;
   }
   badge(el, 'err', res.status || 'нет связи');
-  tb.innerHTML = `<tr><td colspan="3" class="bad small">${esc(res.error||'ошибка')}</td></tr>`;
+  tb.innerHTML = '<tr><td colspan="3" class="bad small">' + esc(res.error||'ошибка') + '</td></tr>';
   return [];
 }
 
-function renderBrandCreated(){
-  const prods = (state.products[myId('brand')]||[]);
-  document.getElementById('brandCreated').innerHTML =
-    prods.map(p=>`<tr><td>#${p.id}</td><td>${esc(p.name)}</td>
-                      <td class="muted small">${esc(p.category||'')}</td></tr>`).join('')
-    || '<tr><td class="muted small">пусто</td></tr>';
+async function loadBrandProducts(){
+  const el = document.getElementById('brandProdsSrc');
+  const tb = document.getElementById('brandProds');
+  if (!state.tokens.brand){ badge(el,'','нет токена'); tb.innerHTML=''; return []; }
+
+  const res = await api('GET', '/brand/products', {role:'brand'});
+  if (res.ok && Array.isArray(res.data)){
+    badge(el, 'live', 'backend · ' + res.data.length);
+    tb.innerHTML = res.data.map(p =>
+      '<tr><td>#' + p.id + '</td><td>' + esc(p.name) + '</td>' +
+      '<td class="muted small">' + esc(p.category||'') + '</td></tr>').join('')
+      || '<tr><td colspan="3" class="muted small">продуктов ещё нет</td></tr>';
+    return res.data;
+  }
+  badge(el, 'err', res.status || 'нет связи');
+  tb.innerHTML = '<tr><td colspan="3" class="bad small">' + esc(res.error||'ошибка') + '</td></tr>';
+  return [];
 }
-function renderStockCreated(){
-  const sid = myId('store');
-  const s = state.stocks[sid] || {};
-  document.getElementById('stockCreated').innerHTML =
-    Object.entries(s).map(([pid,v]) =>
-      `<tr><td>product #${pid}</td><td>${v.qty} шт</td><td>${Number(v.price).toFixed(2)} ₽</td></tr>`).join('')
-    || '<tr><td class="muted small">пусто</td></tr>';
+
+/* GET /store/stock нет — собираем свои остатки из публичной витрины своего бренда */
+async function loadStock(){
+  const el = document.getElementById('stockSrc');
+  const tb = document.getElementById('stockCreated');
+  const brandId = myBrandId('store'), storeId = myId('store');
+  if (brandId == null){ badge(el,'err','в токене нет brandId'); tb.innerHTML=''; return; }
+
+  const res = await api('GET', '/brand/' + brandId + '/products');
+  if (res.ok && Array.isArray(res.data)){
+    const mine = res.data.filter(o => o.storeId === storeId);
+    badge(el, 'demo', 'через витрину · ' + mine.length);
+    tb.innerHTML = mine.map(o =>
+      '<tr><td>product #' + o.productId + '</td><td>' + esc(o.name) + '</td>' +
+      '<td>' + o.availableQuantity + ' шт</td>' +
+      '<td>' + Number(o.unitPrice).toFixed(2) + ' ₽</td></tr>').join('')
+      || '<tr><td class="muted small">остатков ещё нет</td></tr>';
+  } else {
+    badge(el, 'err', res.status || 'нет связи');
+    tb.innerHTML = '<tr><td class="bad small">' + esc(res.error||'ошибка') + '</td></tr>';
+  }
 }
 
 /* ============================================================
@@ -847,10 +1034,10 @@ function renderStockCreated(){
 function switchTab(name){
   document.querySelectorAll('#tabs button').forEach(b =>
     b.classList.toggle('on', b.dataset.tab===name));
-  ['catalog','accounts','brandcab','storecab','gaps'].forEach(t =>
+  ['catalog','accounts','brandcab','storecab','routes','gaps'].forEach(t =>
     document.getElementById('tab-'+t).classList.toggle('hide', t!==name));
-  if (name==='brandcab'){ renderBrandCreated(); loadBrandStores(); }
-  if (name==='storecab') renderStockCreated();
+  if (name==='brandcab'){ loadBrandStores(); loadBrandProducts(); }
+  if (name==='storecab') loadStock();
 }
 
 /* ============================================================
@@ -872,12 +1059,14 @@ function bind(){
   document.getElementById('ping').onclick = async () => {
     const res = await api('GET', '/brand');
     badge(document.getElementById('pingBadge'),
-          res.ok?'live':'err', res.ok ? `ok ${res.status}` : (res.status||'нет связи'));
+          res.ok?'live':'err', res.ok ? 'ok ' + res.status : (res.status||'нет связи'));
   };
   document.getElementById('reloadBrands').onclick = loadBrands;
   document.getElementById('reloadBrandStores').onclick = loadBrandStores;
+  document.getElementById('reloadBrandProds').onclick = loadBrandProducts;
+  document.getElementById('reloadOrder').onclick = loadOrder;
+  document.getElementById('probeRoutes').onclick = probeRoutes;
   document.getElementById('clearLog').onclick = () => document.getElementById('log').innerHTML='';
-  document.getElementById('clearCart').onclick = () => { state.cart=[]; save(); renderCart(); };
   document.getElementById('payBtn').onclick = pay;
 
   /* --- user --- */
@@ -885,17 +1074,17 @@ function bind(){
     const res = await api('POST', '/user', {body:{
       phone: document.getElementById('uPhone').value,
       password: document.getElementById('uPass').value }});
-    if (res.ok){ setToken('user', res.data.token); toast('Пользователь зарегистрирован'); }
+    if (res.ok){ setToken('user', res.data.token); toast('Пользователь зарегистрирован'); loadOrder(); }
     else toast('Регистрация: ' + res.error, 'bad');
   };
   document.getElementById('uLogin').onclick = async () => {
     const res = await api('POST', '/user/login', {body:{
       number: document.getElementById('uPhone').value,
       password: document.getElementById('uPass').value }});
-    if (res.ok){ setToken('user', res.data.token); toast('Вход выполнен'); }
+    if (res.ok){ setToken('user', res.data.token); toast('Вход выполнен'); loadOrder(); }
     else toast('Вход: ' + res.error, 'bad');
   };
-  document.getElementById('uOut').onclick = () => setToken('user', null);
+  document.getElementById('uOut').onclick = () => { setToken('user', null); loadOrder(); };
 
   /* --- brand --- */
   document.getElementById('bReg').onclick = async () => {
@@ -908,14 +1097,15 @@ function bind(){
     fd.append('image', f || await placeholderImage(name), f ? f.name : 'logo.png');
     const res = await api('POST', '/brand', {form: fd});
     if (res.ok){ setToken('brand', res.data.token); toast('Бренд создан');
-                 loadBrands(); loadBrandStores(); }
+                 loadBrands(); loadBrandStores(); loadBrandProducts(); }
     else toast('Регистрация бренда: ' + res.error, 'bad');
   };
   document.getElementById('bLogin').onclick = async () => {
     const res = await api('POST', '/brand/login', {body:{
       email: document.getElementById('bEmail').value,
       password: document.getElementById('bPass').value }});
-    if (res.ok){ setToken('brand', res.data.token); toast('Вход бренда'); loadBrandStores(); }
+    if (res.ok){ setToken('brand', res.data.token); toast('Вход бренда');
+                 loadBrandStores(); loadBrandProducts(); }
     else toast('Вход бренда: ' + res.error, 'bad');
   };
   document.getElementById('bOut').onclick = () => setToken('brand', null);
@@ -926,10 +1116,8 @@ function bind(){
     const res = await api('POST', '/store/login', {body:{
       email: document.getElementById('sEmail').value,
       password: document.getElementById('sPass').value }});
-    if (res.ok){
-      setToken('store', res.data.token);
-      toast('Вход магазина, id=' + myId('store'));
-    } else toast('Вход магазина: ' + res.error, 'bad');
+    if (res.ok){ setToken('store', res.data.token); toast('Вход магазина, id=' + myId('store')); loadStock(); }
+    else toast('Вход магазина: ' + res.error, 'bad');
   };
   document.getElementById('sOut').onclick = () => setToken('store', null);
 
@@ -942,9 +1130,8 @@ function bind(){
     if (res.ok){
       document.getElementById('sEmail').value = body.email;
       document.getElementById('sPass').value  = body.password;
-      toast('Точка создана');
-      renderBrandCreated();
-      loadBrandStores();          // id придёт отсюда: AddStoreResponse его не отдаёт
+      toast('Точка #' + res.data.id + ' создана');
+      loadBrandStores();
     } else toast('Создание точки: ' + res.error, 'bad');
   };
   document.getElementById('npAdd').onclick = async () => {
@@ -953,11 +1140,9 @@ function bind(){
       name: document.getElementById('npName').value,
       category: document.getElementById('npCat').value }});
     if (res.ok){
-      const bid = myId('brand');
-      (state.products[bid] = state.products[bid] || []).push(res.data);
-      save(); renderBrandCreated();
       document.getElementById('stProd').value = res.data.id;
-      toast(`Продукт #${res.data.id} добавлен`);
+      loadBrandProducts();
+      toast('Продукт #' + res.data.id + ' добавлен. Теперь заведи ему остаток в кабинете магазина.');
     } else toast('Продукт: ' + res.error, 'bad');
   };
 
@@ -967,13 +1152,8 @@ function bind(){
     const res = await api('POST', '/store/stock', {role:'store', query:{productId}, body:{
       availableQuantity: Number(document.getElementById('stQty').value),
       unitPrice: Number(document.getElementById('stPrice').value) }});
-    if (res.ok){
-      const sid = res.data.storeId;
-      (state.stocks[sid] = state.stocks[sid] || {})[productId] =
-        {price: res.data.unitPrice, qty: res.data.availableQuantity};
-      save(); renderStockCreated();
-      toast('Остаток сохранён');
-    } else toast('Остаток: ' + res.error, 'bad');
+    if (res.ok){ toast('Остаток сохранён'); loadStock(); }
+    else toast('Остаток: ' + res.error, 'bad');
   };
 }
 
@@ -982,7 +1162,8 @@ function bind(){
    ============================================================ */
 load();
 if (!state.apiBase) state.apiBase = defaultBase();
-bind(); checkEnv(); renderGaps(); renderAuth(); renderCart(); loadBrands();
+bind(); checkEnv(); renderRoutes(); renderGaps(); renderAuth(); renderCart();
+loadBrands().then(() => { if (state.selectedBrand != null) openBrand(state.selectedBrand); });
 </script>
 </body>
 </html>

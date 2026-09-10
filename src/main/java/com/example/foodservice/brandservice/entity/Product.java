@@ -19,7 +19,7 @@ public class Product {
     @JoinColumn(name = "brandId", nullable = false)
     private Brand brand;
 
-    @Column(name = "store_product_id", nullable = false)
+    @Column(name = "external_product_id", nullable = false)
     private String externalProductId;
 
     @Column(nullable = false)

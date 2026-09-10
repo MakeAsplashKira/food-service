@@ -36,4 +36,9 @@ public class BrandExceptionHandler {
         return responseBuilder.notFound(e.getMessage());
     }
 
+    @ExceptionHandler(ProductForBrandNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProductForBrandNotFound(ProductForBrandNotFoundException e) {
+        return responseBuilder.notFound(e.getMessage());
+    }
+
 }

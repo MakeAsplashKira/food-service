@@ -18,10 +18,6 @@ public class OrderServiceExceptionHandler {
         return responseBuilder.badRequest(e.getMessage());
     }
 
-    @ExceptionHandler(DifferentRestaurantException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDifferentRestaurant(DifferentRestaurantException e) {
-        return responseBuilder.badRequest(e.getMessage());
-    }
 
     @ExceptionHandler(OrderItemNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleOrderItemNotFound(OrderItemNotFoundException e) {
@@ -38,5 +34,14 @@ public class OrderServiceExceptionHandler {
         return responseBuilder.badRequest(e.getMessage());
     }
 
+    @ExceptionHandler(BrandOrProductNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBrandOrProductNotFound(BrandOrProductNotFoundException e) {
+        return responseBuilder.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderNotFound(OrderNotFoundException e) {
+        return responseBuilder.badRequest(e.getMessage());
+    }
 
 }

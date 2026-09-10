@@ -4,24 +4,22 @@ import static com.example.foodservice.brandservice.dto.AuthDTO.RegisterCommand;
 import static com.example.foodservice.brandservice.dto.AuthDTO.LoginCommand;
 
 import com.example.foodservice.brandservice.dto.BrandInfo;
+import com.example.foodservice.brandservice.dto.ProductDTO.AddProductCommand;
+import com.example.foodservice.brandservice.dto.ProductDTO.DeleteProductCommand;
 import com.example.foodservice.brandservice.dto.StoreDTO.AddStoreCommand;
 import com.example.foodservice.brandservice.dto.StoreDTO.StoreInfo;
-import com.example.foodservice.brandservice.dto.product.AddProductCommand;
-import com.example.foodservice.brandservice.dto.product.ProductInfo;
+import com.example.foodservice.brandservice.dto.ProductInfo;
 import com.example.foodservice.brandservice.entity.Brand;
-import com.example.foodservice.brandservice.exception.BrandAlreadyExistsException;
-import com.example.foodservice.brandservice.exception.BrandEmailExistsException;
-import com.example.foodservice.brandservice.exception.BrandNameExistsException;
-import com.example.foodservice.brandservice.exception.BrandNotFoundException;
+import com.example.foodservice.brandservice.exception.*;
 import com.example.foodservice.brandservice.repository.BrandRepository;
 import com.example.foodservice.common.exception.InvalidCredentialsException;
 import com.example.foodservice.common.fileservice.FileStorageService;
 import com.example.foodservice.common.security.JwtService;
 import com.example.foodservice.common.security.SubjectType;
 import com.example.foodservice.brandservice.entity.Product;
+import com.example.foodservice.orderservice.exception.BrandOrProductNotFoundException;
 import com.example.foodservice.storeservice.StoreService;
 import com.example.foodservice.brandservice.repository.ProductRepository;
-import com.example.foodservice.storeservice.dto.ProductDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,6 +32,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BrandService {
+    private final static String BRAND_SUB_FOLDER = "brands";
+    private final static String PRODUCT_SUB_FOLDER = "products";
+
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final FileStorageService storageService;
@@ -42,7 +43,6 @@ public class BrandService {
     private final ProductRepository productRepository;
     private final StoreService storeService;
 
-    private static final String IMAGE_URL = "/brand/bebend"; //TODO: сделать работу с файлами
 
     @Transactional
     public String register(RegisterCommand command, MultipartFile image) {
@@ -58,7 +58,7 @@ public class BrandService {
         brand.setPasswordHash(passwordEncoder.encode(command.rawPassword()));
 
         if(!image.isEmpty()) {
-            String imageUrl = storageService.storeFile(image, "brands");
+            String imageUrl = storageService.storeFile(image, BRAND_SUB_FOLDER);
             brand.setImageUrl(imageUrl);
         }
 
@@ -85,10 +85,10 @@ public class BrandService {
     @Transactional
     public ProductInfo addProduct(AddProductCommand command) {
         Brand brand = brandRepository.getReferenceById(command.brandId());
-               // .orElseThrow(() -> new BrandNotFoundException(command.brandId())); Пока не уверен как красиво сделать
 
         Product product = command.toProductWithBrand(brand);
-        product.setImageUrl(IMAGE_URL);
+        String imageUrl = storageService.storeFile(command.image(), PRODUCT_SUB_FOLDER);
+        product.setImageUrl(imageUrl);
 
         productRepository.save(product);
 
@@ -101,9 +101,7 @@ public class BrandService {
             throw new BrandNotFoundException(command.brandId());
         }
 
-        StoreInfo storeInfo = storeService.register(command.brandId(), command.email(), command.rawPassword(), command.address());
-
-        return storeInfo;
+        return storeService.register(command.brandId(), command.email(), command.rawPassword(), command.address());
     }
 
     @Transactional(readOnly = true)
@@ -126,5 +124,14 @@ public class BrandService {
         return productRepository.findByBrandId(brandId).stream()
                 .map(ProductInfo::from)
                 .toList();
+    }
+
+    @Transactional
+    public void deleteProduct(DeleteProductCommand command) {
+        int deleteRows = productRepository.deleteByIdAndBrandId(command.productId(), command.brandId());
+
+        if(deleteRows == 0) {
+            throw new ProductForBrandNotFoundException(command.productId(), command.brandId());
+        }
     }
 }

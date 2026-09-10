@@ -11,7 +11,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Entity
 @Table(name = "orders")
@@ -28,10 +27,7 @@ public class Order {
     @Setter(AccessLevel.NONE)
     private Long version;
 
-    @OneToMany(mappedBy = "order",
-            fetch = FetchType.LAZY,
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @CreationTimestamp
@@ -45,58 +41,70 @@ public class Order {
     private Instant deliveredAt;
 
     @Column(nullable = false)
-    private Long storeId;
+    private Long brandId;
 
     @Column(nullable = false)
     private Long userId;
+
+    private Long storeId;
+    private String address;
+    private String commentToStore;
+    private String commentToCourier;
 
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
 
-    public Order(List<OrderItem> orderItems, Long storeId, Long userId) {
-        this.orderItems = orderItems;
-        this.storeId = storeId;
+    @Enumerated(value = EnumType.STRING)
+    private PaymentMethod paymentMethod;
+
+    public Order(Long userId, Long brandId) {
         this.userId = userId;
-        this.status = OrderStatus.DRAFT;
-    }
-    public Order(Long userId, Long storeId) {
-        this.userId = userId;
-        this.storeId = storeId;
+        this.brandId = brandId;
         this.status = OrderStatus.DRAFT;
     }
 
     public void incrementOrderItemQuantity(OrderItem orderItem) {
         int MAX_QUANTITY = orderItem.getMaximumQuantity();
 
-        if(orderItem.getQuantity() >= MAX_QUANTITY) {
-            throw new IllegalQuantityStateException(orderItem.getMenuItemId(), MAX_QUANTITY);
+        if (orderItem.getRequestedQuantity() >= MAX_QUANTITY) {
+            throw new IllegalQuantityStateException(orderItem.getProductId(), MAX_QUANTITY);
         }
         orderItem.incrementQuantity();
     }
-    public void decrementOrderItemQuantity(OrderItem orderItem) {
-        if(orderItem.getQuantity() <= orderItem.getMinimumQuantity()) {
+
+    public boolean decrementOrderItemQuantity(OrderItem orderItem) {
+        if (orderItem.getRequestedQuantity() <= orderItem.getMinimumQuantity()) {
             this.removeOrderItem(orderItem);
-            return;
+
+            return !this.orderItems.isEmpty();
         }
         orderItem.decrementQuantity();
+        return true;
     }
 
-//    public void addOrderItem(ProductInfo productInfo) {
-//        Optional<OrderItem> orderItem = this.orderItems.stream()
-//                .filter((item) -> item.getMenuItemId().equals(productInfo.id()))
-//                .findFirst();
-//
-//        if(orderItem.isPresent()) {
-//             orderItem.get().incrementQuantity();
-//        } else {
-//            OrderItem newOrderItem = OrderItem.from(this, productInfo);
-//            this.orderItems.add(newOrderItem);
-//        }
-//    }
+    public void setOrderItemQuantity(OrderItem orderItem, Integer requestedQuantity) {
+        int maxQuantity = orderItem.getMaximumQuantity();
+        if(requestedQuantity > maxQuantity) {
+            throw new IllegalQuantityStateException(orderItem.getProductId(), maxQuantity);
+        } else {
+            orderItem.setRequestedQuantity(requestedQuantity);
+        }
+    }
+
+    public void addOrderItem(Long productId) {
+        this.orderItems.stream()
+                .filter(item -> item.getProductId().equals(productId))
+                .findFirst()
+                .ifPresentOrElse(
+                        this::incrementOrderItemQuantity,
+                        () -> this.orderItems.add(new OrderItem(this, productId))
+                );
+
+    }
 
     public void removeOrderItem(OrderItem orderItem) {
-        if(this.orderItems.remove(orderItem)) {
+        if (this.orderItems.remove(orderItem)) {
             orderItem.setOrder(null);
         }
     }
@@ -105,6 +113,9 @@ public class Order {
         return this.status == OrderStatus.DRAFT;
     }
 
+    public List<Long> extractProductIdsFromItems(){
+        return this.orderItems.stream().map(OrderItem::getProductId).toList();
+    }
 }
 
 

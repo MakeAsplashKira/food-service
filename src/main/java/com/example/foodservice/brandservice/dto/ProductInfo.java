@@ -1,4 +1,4 @@
-package com.example.foodservice.brandservice.dto.product;
+package com.example.foodservice.brandservice.dto;
 
 import com.example.foodservice.brandservice.entity.Product;
 

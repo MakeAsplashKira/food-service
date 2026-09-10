@@ -1,17 +1,20 @@
 package com.example.foodservice.orderservice;
 
 import com.example.foodservice.orderservice.dto.*;
-import com.example.foodservice.orderservice.exception.DuplicateMenuItemException;
-import com.example.foodservice.orderservice.exception.OrderItemNotFoundException;
-import com.example.foodservice.orderservice.exception.OrderUnmodifiableException;
-import com.example.foodservice.storeservice.StoreService;
-import com.example.foodservice.orderservice.exception.DifferentRestaurantException;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutCommand;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutInfo;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutItemInfo;
+import com.example.foodservice.orderservice.dto.CheckoutDTO.GetCheckoutCommand;
+import com.example.foodservice.orderservice.dto.OrderDTO.AddOrderItemCommand;
+import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
+import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityCommand;
+import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
+import com.example.foodservice.orderservice.exception.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -19,61 +22,28 @@ import java.util.stream.Collectors;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final StoreService storeService;
+    private final ProductCatalogByOrder productCatalog;
+    private final UserCatalog userCatalog;
+    private final StoreCatalog storeCatalog;
 
     private static final int MAX_RESTAURANTS_AVAILABLE_FOR_ORDER = 1;
 
 
-//    @Transactional
-//    public CreateOrderInfo createOrder(CreateOrderCommand command) {
-//        List<OrderLine> lines = command.lines();
-//
-//        //1. Проверяем дубликаты
-//        Map<Long, Integer> linesMap = quantitiesByMenuItemId(lines);
-//
-//        //2. Передаем во внешний сервис для получения MenuItem
-//        List<ProductInfo> menuItems = storeService
-//                .getProductsByIds(extractIdsFromOrderItemsToList(lines));
-//
-//        //3. Проверяем, все ли menuItems из одного ресторана
-//        ensureAllItemsFromSameRestaurant(menuItems);
-//
-//        //4. теперь через сервис уменьшаем quantity
-//        storeService.decreaseProductQuantity(lines);
-//
-//
-//        List<OrderItem> orderItems = menuItems
-//                .stream()
-//                .map(menuItem -> OrderItem.from(menuItem, linesMap))
-//                .collect(Collectors.toCollection(ArrayList::new));
-//
-//
-//        Long restaurantId = menuItems.getFirst().restaurantId();
-//        Order order = Order.from(orderItems, restaurantId, command.userId());
-//        orderItems.forEach(orderItem -> orderItem.setOrder(order));
-//
-//        orderRepository.save(order);
-//
-//        return CreateOrderInfo.from(order);
-//    }
+    @Transactional
+    public OrderInfo addOrderItem(AddOrderItemCommand command) {
+        if (!productCatalog.existsByBrandIdAndProductId(command.brandId(), command.productId())) {
+            throw new BrandOrProductNotFoundException(command.brandId(), command.productId());
+        }
 
-//    @Transactional
-//    public OrderInfo addItem(AddItemCommand command) {
-//        ProductInfo productInfo = storeService.getProductByIdAndStoreId(command.productId(), command.storeId());
-//
-//        Order order = orderRepository.findByUserIdAndStoreId(command.userId(), command.storeId())
-//                .orElseGet(command::toOrder);
-//
-//        if( ! order.canBeModified()) {
-//            throw new OrderUnmodifiableException(order.getStatus());
-//        }
-//
-//        order.addOrderItem(productInfo);
-//
-//        orderRepository.save(order);
-//
-//        return OrderInfo.from(order);
-//    }
+        Order order = orderRepository.findByUserIdAndBrandIdAndStatus(command.userId(), command.brandId(), OrderStatus.DRAFT)
+                .orElseGet(command::toOrder);
+
+        order.addOrderItem(command.productId());
+
+        orderRepository.save(order);
+
+        return OrderInfo.from(order);
+    }
 
     @Transactional
     public void incrementItemQuantity(UpdateItemQuantityCommand command) {
@@ -82,7 +52,7 @@ public class OrderService {
 
         Order order = orderItem.getOrder();
 
-        if( ! order.canBeModified()) {
+        if (!order.canBeModified()) {
             throw new OrderUnmodifiableException(order.getStatus());
         }
 
@@ -98,37 +68,79 @@ public class OrderService {
 
         Order order = orderItem.getOrder();
 
-        if( ! order.canBeModified()) {
+        if (!order.canBeModified()) {
             throw new OrderUnmodifiableException(order.getStatus());
         }
 
-        order.decrementOrderItemQuantity(orderItem);
+        if (order.decrementOrderItemQuantity(orderItem)) {
+            orderRepository.save(order);
+        } else {
+            orderRepository.delete(order);
+        }
 
+    }
+
+    @Transactional
+    public void setItemQuantity(SetItemQuantityCommand command) {
+        OrderItem orderItem = orderItemRepository.findByIdAndOrderUserId(command.orderItemId(), command.userId())
+                .orElseThrow(() -> new OrderItemNotFoundException(command.orderItemId()));
+
+        Order order = orderItem.getOrder();
+
+        if (!order.canBeModified()) {
+            throw new OrderUnmodifiableException(order.getStatus());
+        }
+
+        order.setOrderItemQuantity(orderItem, command.requestedQuantity());
         orderRepository.save(order);
     }
 
-    private List<Long> extractIdsFromOrderItemsToList(List<OrderLine> lines) {
-        return lines.stream().map(OrderLine::menuItemId).toList();
+    @Transactional(readOnly = true)
+    public OrderInfo getOrder(GetOrderCommand command) {
+        Order order = orderRepository.findByUserIdAndBrandIdAndStatus(command.userId(), command.brandId(), OrderStatus.DRAFT)
+                .orElseThrow(() -> new OrderNotFoundException(command.userId(), command.brandId()));
+
+        return OrderInfo.from(order);
     }
 
-//    private void ensureAllItemsFromSameRestaurant(List<ProductInfo> menuItems) {
-//        Set<Long> restaurantIds = new HashSet<>();
-//        menuItems.forEach(menuItem -> restaurantIds.add(menuItem.restaurantId()));
-//
-//        if(restaurantIds.size() > MAX_RESTAURANTS_AVAILABLE_FOR_ORDER) {
-//            throw new DifferentRestaurantException();
-//        }
-//    }
 
-    private Map<Long, Integer> quantitiesByMenuItemId(List<OrderLine> lines) {
-        Map<Long, Integer> quantities = new HashMap<>();
-        for(OrderLine line : lines) {
-            if(quantities.containsKey(line.menuItemId())) {
-                throw new DuplicateMenuItemException(line.menuItemId());
-            }
-            quantities.put(line.menuItemId(), line.quantity());
 
-        }
-        return quantities;
+    private PricedOrder buildPricedOrder(Long userId, Long brandId) {
+        Order order = orderRepository.findByUserIdAndBrandIdAndStatus(userId, brandId, OrderStatus.DRAFT)
+                .orElseThrow(() -> new OrderNotFoundException(userId, brandId));
+
+        UserInfo userInfo = userCatalog.getUserInfo(userId);
+
+        List<Long> productIds = order.extractProductIdsFromItems();
+
+        //TODO: опять же дальше будем передавать longitude, latitude, пока что просто адрес как заглушку
+        Long storeId = storeCatalog.getStoreIdByBrandIdAndUserAdress(brandId, userInfo.address());
+        List<StockInfo> stockInfo = storeCatalog.findStockByStoreIdAndProductIds(storeId, productIds);
+
+        List<ProductInfo> productInfo = productCatalog.getProductsByIdsForOrder(productIds);
+
+        //Если не хватает предмета, будет просто CheckoutItemInfo с null полями, кроме productId и с isAvailable=false
+        List<CheckoutItemInfo> checkoutItemInfo = CheckoutItemInfo.from(productInfo, stockInfo, order.getOrderItems());
+        CheckoutInfo checkoutInfo = CheckoutInfo.from(storeId, order, checkoutItemInfo, userInfo);
+
+
+        return PricedOrder.from(checkoutInfo, order);
     }
+
+    @Transactional(readOnly = true)
+    public CheckoutInfo getCheckoutDetails(GetCheckoutCommand command) {
+        return buildPricedOrder(command.userId(), command.brandId()).checkoutInfo();
+    }
+
+    @Transactional
+    public void checkoutOrder(CheckoutCommand command) {
+        PricedOrder pricedOrder = buildPricedOrder(command.userId(), command.brandId());
+
+        Order order = pricedOrder.order();
+        CheckoutInfo checkoutInfo = pricedOrder.checkoutInfo();
+
+
+    }
+
+
 }

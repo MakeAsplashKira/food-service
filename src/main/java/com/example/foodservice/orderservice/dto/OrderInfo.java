@@ -8,20 +8,16 @@ import java.util.List;
 
 public record OrderInfo(
         Long id,
+        Long brandId,
         List<OrderItemInfo> orderItems,
-        Long restaurantId,
-        Long userId,
-        OrderStatus status,
-        Instant createdAt
+        OrderStatus status
 ) {
     public static OrderInfo from(Order order) {
         return new OrderInfo(
                 order.getId(),
+                order.getBrandId(),
                 order.getOrderItems().stream().map(OrderItemInfo::from).toList(),
-                order.getStoreId(),
-                order.getUserId(),
-                order.getStatus(),
-                order.getCreatedAt()
+                order.getStatus()
         );
     }
 }

@@ -9,6 +9,7 @@ import com.example.foodservice.storeservice.dto.AuthDTO.LoginRequest;
 import com.example.foodservice.storeservice.dto.ProductDTO.ProductInfo;
 import com.example.foodservice.storeservice.dto.StockDTO;
 import com.example.foodservice.storeservice.dto.StockDTO.AddStockResponse;
+import com.example.foodservice.storeservice.dto.StockDTO.DeleteStockByProductIdCommand;
 import com.example.foodservice.storeservice.dto.StockDTO.StockInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,5 +47,16 @@ public class StoreController {
 
         return responseBuilder.created(AddStockResponse.from(productInfo));
     }
+
+    @DeleteMapping("/stock/product/{productId}")
+    public ResponseEntity<ApiResponse<Void>> deleteStockByStoreIdAndProductId(
+            @PathVariable Long productId,
+            @AuthenticationPrincipal StorePrincipal principal) {
+
+        storeService.deleteStockByStoreIdAndProductId(DeleteStockByProductIdCommand.from(principal.storeId(), productId));
+
+        return responseBuilder.ok(null);
+    }
+
 
 }

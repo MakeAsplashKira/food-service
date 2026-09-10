@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class StoreServiceExceptionHandler {
     private final ResponseBuilder responseBuilder;
 
-    @ExceptionHandler(StoreEmailExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleEmailExist(StoreEmailExistsException e) {
-        return responseBuilder.conflict(e.getMessage());
+    @ExceptionHandler(StoreExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStoreExists(StoreExistsException e) {
+        return responseBuilder.badRequest(e.getMessage());
     }
 
     @ExceptionHandler(AuthRequiredException.class)
@@ -45,8 +45,8 @@ public class StoreServiceExceptionHandler {
         return responseBuilder.conflict(e.getMessage());
     }
 
-    @ExceptionHandler(StockAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleStockAlreadyExists(StockAlreadyExistsException e) {
+    @ExceptionHandler(StockExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStockAlreadyExists(StockExistsException e) {
         return responseBuilder.conflict(e.getMessage());
     }
 

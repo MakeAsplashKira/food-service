@@ -72,5 +72,14 @@ public final class StockDTO {
         }
     }
 
+    public record DeleteStockByProductIdCommand(Long storeId,Long productId) {
+        public static DeleteStockByProductIdCommand from(Long storeId, Long productId) {
+            return new DeleteStockByProductIdCommand(
+              storeId,
+              productId
+            );
+        }
+    }
+
 
 }

@@ -16,11 +16,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         File uploadDir = new File("uploads");
         String absolutePath = uploadDir.getAbsolutePath();
 
-        // Печатаем в консоль, чтобы ты СВОИМИ ГЛАЗАМИ увидел, где Spring ищет файлы
-        System.out.println("============== STATIC STORAGE PATH ==============");
-        System.out.println("Spring expects files to be here: " + absolutePath);
-        System.out.println("=================================================");
-
         // Превращаем в правильный URL для файловой системы (всегда заканчивается на /)
         String resourceLocation = "file:" + absolutePath + File.separator;
 
