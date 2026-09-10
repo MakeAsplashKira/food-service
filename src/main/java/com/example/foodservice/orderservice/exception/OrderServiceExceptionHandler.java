@@ -31,7 +31,7 @@ public class OrderServiceExceptionHandler {
 
     @ExceptionHandler(OrderUnmodifiableException.class)
     public ResponseEntity<ApiResponse<Void>> handleOrderUnmodifiable(OrderUnmodifiableException e) {
-        return responseBuilder.badRequest(e.getMessage());
+        return responseBuilder.conflict(e.getMessage());
     }
 
     @ExceptionHandler(BrandOrProductNotFoundException.class)
@@ -41,7 +41,7 @@ public class OrderServiceExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleOrderNotFound(OrderNotFoundException e) {
-        return responseBuilder.badRequest(e.getMessage());
+        return responseBuilder.notFound(e.getMessage());
     }
 
     @ExceptionHandler(OrderItemUnavailableException.class)

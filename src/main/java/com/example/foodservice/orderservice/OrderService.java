@@ -98,7 +98,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderInfo getOrder(GetOrderCommand command) {
+    public OrderInfo getDraftOrder(GetOrderCommand command) {
         Order order = orderRepository.findByUserIdAndBrandIdAndStatus(command.userId(), command.brandId(), OrderStatus.DRAFT)
                 .orElseThrow(() -> new OrderNotFoundException(command.userId(), command.brandId()));
 
@@ -139,6 +139,8 @@ public class OrderService {
         PricedOrder pricedOrder = buildPricedOrder(command.userId(), command.brandId());
 
         Order order = pricedOrder.order();
+
+
         CheckoutInfo checkoutInfo = pricedOrder.checkoutInfo();
 
         Map<Long, CheckoutItemInfo> checkoutItemMap = checkoutInfo.checkoutItems().stream()
@@ -152,7 +154,7 @@ public class OrderService {
             } else throw new OrderItemUnavailableException(orderItem.getId());
         }
 
-        order.snapshotOrder(checkoutInfo,
+        order.prepareForPayment(checkoutInfo,
                 command.commentToStore(),
                 command.commentToCourier(),
                 command.paymentMethod());

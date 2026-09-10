@@ -3,6 +3,7 @@ package com.example.foodservice.orderservice;
 import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutInfo;
 import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutItemInfo;
 import com.example.foodservice.orderservice.exception.IllegalQuantityStateException;
+import com.example.foodservice.orderservice.exception.OrderUnmodifiableException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -110,7 +111,11 @@ public class Order {
         orderItem.setExternalProductId(checkoutItem.externalProductId());
     }
 
-    public void snapshotOrder(CheckoutInfo checkoutInfo, String commentToStore, String commentToCourier, PaymentMethod paymentMethod) {
+    public void prepareForPayment(CheckoutInfo checkoutInfo, String commentToStore, String commentToCourier, PaymentMethod paymentMethod) {
+        if(!this.canBeModified()) {
+            throw new OrderUnmodifiableException(this.getStatus());
+        }
+
         this.setAddress(checkoutInfo.userInfo().address());
         this.setStoreId(checkoutInfo.storeId());
         this.setCommentToStore(commentToStore);

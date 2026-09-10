@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 public class OrderUnmodifiableException extends RuntimeException {
-    private static final String MESSAGE_TEMPLATE = "Order can't be modified because its current status is %s";
+    private static final String MESSAGE_TEMPLATE = "Order can't be modified, because its current status is %s";
     private final String status;
 
     public OrderUnmodifiableException(OrderStatus status) {

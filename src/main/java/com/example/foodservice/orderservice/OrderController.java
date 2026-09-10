@@ -81,7 +81,7 @@ public class OrderController {
             @RequestParam @NotNull @Min(1) Long brandId,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        return responseBuilder.ok(orderService.getOrder(new GetOrderCommand(principal.userId(), brandId)));
+        return responseBuilder.ok(orderService.getDraftOrder(new GetOrderCommand(principal.userId(), brandId)));
     }
 
     @Validated
