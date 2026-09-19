@@ -4,10 +4,12 @@ package com.example.foodservice.orderservice.exception;
 import com.example.foodservice.common.ResponseBuilder;
 import com.example.foodservice.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class OrderServiceExceptionHandler {
@@ -47,6 +49,34 @@ public class OrderServiceExceptionHandler {
     @ExceptionHandler(OrderItemUnavailableException.class)
     public ResponseEntity<ApiResponse<Void>> handleOrderItemUnavailable(OrderItemUnavailableException e) {
         return responseBuilder.conflict(e.getMessage());
+    }
+
+    @ExceptionHandler(OrderStatusNotAllowPaymentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderStatusNotAllowPayment(OrderStatusNotAllowPaymentException e) {
+        return responseBuilder.conflict(e.getMessage());
+    }
+
+    @ExceptionHandler(OrderAlreadyHasPaymentIdException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderAlreadyHasPaymentId(OrderAlreadyHasPaymentIdException e) {
+        return responseBuilder.conflict(e.getMessage());
+    }
+
+    @ExceptionHandler(OrderNotFoundByPaymentIdException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderNotFoundByPaymentIdException(OrderNotFoundByPaymentIdException e) {
+        log.error(e.getMessage());
+        return responseBuilder.notFound(null);
+    }
+
+    @ExceptionHandler(OrderStatusNotAllowCompletePaymentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderStatusNotAllowCompletePayment(OrderStatusNotAllowCompletePaymentException e) {
+        log.error(e.getMessage());
+        return responseBuilder.ok(null);
+    }
+
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaymentGateway(PaymentGatewayException e) {
+        log.warn(e.getMessage());
+        return responseBuilder.ok(null);
     }
 
 }

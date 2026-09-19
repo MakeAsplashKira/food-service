@@ -13,6 +13,9 @@ import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
 import com.example.foodservice.orderservice.dto.OrderInfo;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityRequest;
+import com.example.foodservice.orderservice.payment.PaymentInfo;
+import com.example.foodservice.orderservice.payment.PaymentResponse;
+import com.example.foodservice.orderservice.payment.PaymentResultRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -97,12 +100,21 @@ public class OrderController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<Void>> checkoutOrder(
+    public ResponseEntity<ApiResponse<PaymentResponse>> checkoutOrder(
             @Valid @RequestBody CheckoutRequest request,
             @AuthenticationPrincipal UserPrincipal principal
             ) {
-        orderService.checkoutOrder(request.toCommand(principal.userId()));
+        PaymentInfo paymentInfo = orderService.checkoutOrder(request.toCommand(principal.userId()));
 
+        return responseBuilder.ok(PaymentResponse.from(paymentInfo));
+    }
+
+    @PostMapping("/payment/webhook")
+    public ResponseEntity<ApiResponse<Void>> validatePayment(
+           @Valid @RequestBody PaymentResultRequest request
+    ) {
+        orderService.handlePaymentResult(request.toCommand());
         return responseBuilder.ok(null);
     }
+
 }

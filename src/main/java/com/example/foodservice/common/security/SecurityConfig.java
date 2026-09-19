@@ -29,6 +29,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
                         .requestMatchers("/brand/{brandId}/products").permitAll()
+                        .requestMatchers("/order/payment/webhook").permitAll()
 
                         .requestMatchers("/user", "/user/login").permitAll()
                         .requestMatchers("/brand", "/brand/login").permitAll()

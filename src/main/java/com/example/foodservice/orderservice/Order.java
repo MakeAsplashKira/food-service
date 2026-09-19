@@ -2,8 +2,7 @@ package com.example.foodservice.orderservice;
 
 import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutInfo;
 import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutItemInfo;
-import com.example.foodservice.orderservice.exception.IllegalQuantityStateException;
-import com.example.foodservice.orderservice.exception.OrderUnmodifiableException;
+import com.example.foodservice.orderservice.exception.*;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,10 +61,20 @@ public class Order {
     @Enumerated(value = EnumType.STRING)
     private PaymentMethod paymentMethod;
 
+    @Column(unique = true)
+    private String paymentId;
+
     public Order(Long userId, Long brandId) {
         this.userId = userId;
         this.brandId = brandId;
         this.status = OrderStatus.DRAFT;
+    }
+
+    public void attachPayment(String paymentId) {
+        if (this.paymentId != null) { throw new OrderAlreadyHasPaymentIdException(); }
+
+        if (this.status == OrderStatus.AWAITING_PAYMENT) { this.paymentId = paymentId; }
+        else { throw new OrderStatusNotAllowPaymentException(this.status); }
     }
 
     public void incrementOrderItemQuantity(OrderItem orderItem) {
@@ -124,6 +134,15 @@ public class Order {
         this.setStatus(OrderStatus.AWAITING_PAYMENT);
     }
 
+    public BigDecimal getTotalPrice() {
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (OrderItem orderItem: this.orderItems) {
+            totalPrice = totalPrice.add(orderItem.getUnitPrice()
+                    .multiply(BigDecimal.valueOf(orderItem.getRequestedQuantity())));
+        }
+        return totalPrice;
+    }
+
     public void removeOrderItem(OrderItem orderItem) {
         if (this.orderItems.remove(orderItem)) {
             orderItem.setOrder(null);
@@ -136,6 +155,15 @@ public class Order {
 
     public List<Long> extractProductIdsFromItems(){
         return this.orderItems.stream().map(OrderItem::getProductId).toList();
+    }
+
+    public void completePayment() {
+        if ( this.pendingAt != null) { return; }
+
+        if( this.status != OrderStatus.AWAITING_PAYMENT) { throw new OrderStatusNotAllowCompletePaymentException(this.id, this.status); }
+
+        this.status = OrderStatus.PENDING;
+        this.pendingAt = Instant.now();
     }
 }
 

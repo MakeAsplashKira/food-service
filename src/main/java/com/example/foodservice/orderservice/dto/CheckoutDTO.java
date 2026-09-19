@@ -28,14 +28,22 @@ public final class CheckoutDTO {
     public record CheckoutInfo(
             Long id,
             Long brandId,
+            BigDecimal totalPrice,
             Long storeId,
             List<CheckoutItemInfo> checkoutItems,
             UserInfo userInfo
     ){
         public static CheckoutInfo from(Long storeId, Order order, List<CheckoutItemInfo> checkoutItems, UserInfo userInfo) {
+            BigDecimal totalPrice = BigDecimal.ZERO;
+            for(CheckoutItemInfo checkoutItem : checkoutItems) {
+                totalPrice = totalPrice.add(checkoutItem.unitPrice()
+                        .multiply(BigDecimal.valueOf(checkoutItem.requestedQuantity)));
+            }
+
             return new CheckoutInfo(
                     order.getId(),
                     order.getBrandId(),
+                    totalPrice,
                     storeId,
                     checkoutItems,
                     userInfo
@@ -95,6 +103,7 @@ public final class CheckoutDTO {
     public record ViewCheckoutResponse(
             Long id,
             Long brandId,
+            BigDecimal totalPrice,
             List<CheckoutItemResponse> checkoutItems,
             UserInfo userInfo
     ){
@@ -102,8 +111,9 @@ public final class CheckoutDTO {
             return new ViewCheckoutResponse(
                     checkoutInfo.id(),
                     checkoutInfo.brandId(),
+                    checkoutInfo.totalPrice(),
                     checkoutInfo.checkoutItems().stream().map(CheckoutItemResponse::from).toList(),
-                    checkoutInfo.userInfo
+                    checkoutInfo.userInfo()
             );
         }
     }

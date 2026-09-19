@@ -10,6 +10,9 @@ import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
 import com.example.foodservice.orderservice.exception.*;
+import com.example.foodservice.orderservice.payment.PaymentGateway;
+import com.example.foodservice.orderservice.payment.PaymentInfo;
+import com.example.foodservice.orderservice.payment.PaymentResultCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,7 @@ public class OrderService {
     private final ProductCatalogByOrder productCatalog;
     private final UserCatalog userCatalog;
     private final StoreCatalog storeCatalog;
+    private final PaymentGateway paymentGateway;
 
     private static final int MAX_RESTAURANTS_AVAILABLE_FOR_ORDER = 1;
 
@@ -135,7 +139,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void checkoutOrder(CheckoutCommand command) {
+    public PaymentInfo checkoutOrder(CheckoutCommand command) {
         PricedOrder pricedOrder = buildPricedOrder(command.userId(), command.brandId());
 
         Order order = pricedOrder.order();
@@ -153,11 +157,26 @@ public class OrderService {
                 order.snapshotOrderItem(orderItem, checkoutItem);
             } else throw new OrderItemUnavailableException(orderItem.getId());
         }
-
         order.prepareForPayment(checkoutInfo,
                 command.commentToStore(),
                 command.commentToCourier(),
-                command.paymentMethod());
+                command.paymentMethod()
+        );
+        PaymentInfo paymentInfo =  paymentGateway.createPayment(order.getId(), order.getTotalPrice());
 
+        order.attachPayment(paymentInfo.id());
+
+        return paymentInfo;
+    }
+
+    @Transactional
+    public void handlePaymentResult(PaymentResultCommand command) {
+        Order order = orderRepository.findByPaymentId(command.paymentId())
+                .orElseThrow(() -> new OrderNotFoundByPaymentIdException(command.paymentId()));
+
+        if(Objects.equals(command.status(), "SUCCESS")) { order.completePayment(); }
+        else throw new PaymentGatewayException();
+
+        //тут я так понимаю мы должны вызвать отправку заказа магазину?
     }
 }
