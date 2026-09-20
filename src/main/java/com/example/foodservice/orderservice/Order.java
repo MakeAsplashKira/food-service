@@ -165,6 +165,16 @@ public class Order {
         this.status = OrderStatus.PENDING;
         this.pendingAt = Instant.now();
     }
+
+    public void changeStatus(OrderStatus newStatus) {
+        if(this.status == newStatus) { return; }
+
+        if(! this.status.canMoveTo(newStatus)) {
+            throw new OrderStatusIllegalTransitionException(this.getId(), this.status, newStatus);
+        }
+        this.status = newStatus;
+
+    }
 }
 
 

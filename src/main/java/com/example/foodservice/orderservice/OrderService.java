@@ -9,11 +9,14 @@ import com.example.foodservice.orderservice.dto.OrderDTO.AddOrderItemCommand;
 import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
+import com.example.foodservice.orderservice.dto.OrderStatusDTO.OrderStatusChangeCommand;
 import com.example.foodservice.orderservice.exception.*;
 import com.example.foodservice.orderservice.payment.PaymentGateway;
 import com.example.foodservice.orderservice.payment.PaymentInfo;
 import com.example.foodservice.orderservice.payment.PaymentResultCommand;
+import com.example.foodservice.orderservice.storenotifier.OrderPaid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,8 @@ public class OrderService {
     private final UserCatalog userCatalog;
     private final StoreCatalog storeCatalog;
     private final PaymentGateway paymentGateway;
+
+    private final ApplicationEventPublisher publisher;
 
     private static final int MAX_RESTAURANTS_AVAILABLE_FOR_ORDER = 1;
 
@@ -177,6 +182,16 @@ public class OrderService {
         if(Objects.equals(command.status(), "SUCCESS")) { order.completePayment(); }
         else throw new PaymentGatewayException();
 
-        //тут я так понимаю мы должны вызвать отправку заказа магазину?
+        publisher.publishEvent(OrderPaid.from(order.getStoreId(), order.getId()));
     }
+
+    @Transactional
+    public void handleOrderNewStatus(OrderStatusChangeCommand command) {
+        Order order = orderRepository.findByIdAndStoreId(command.orderId(), command.storeId())
+                .orElseThrow(()-> new OrderNotFoundByStoreException(command.orderId(), command.storeId()));
+
+        order.changeStatus(command.newOrderStatus());
+    }
+
+
 }

@@ -7,3 +7,13 @@ services:
       POSTGRES_PASSWORD: "123"
     ports:
       - "5432:5432"
+  partner-store:
+    build: ./partner-store
+    ports:
+      - "8081:8081"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PARTNER_MONOLITH_BASE_URL: "http://host.docker.internal:8080/api/v1"
+      PARTNER_STORE_EMAIL: "paterochka1@mail.ru"
+      PARTNER_STORE_PASSWORD: "12345678"

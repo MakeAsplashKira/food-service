@@ -79,4 +79,13 @@ public class OrderServiceExceptionHandler {
         return responseBuilder.ok(null);
     }
 
+    @ExceptionHandler(OrderNotFoundByStoreException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderNotFoundByStore(OrderNotFoundByStoreException e) {
+        return responseBuilder.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(OrderStatusIllegalTransitionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderStatusIllegalTransition(OrderStatusIllegalTransitionException e) {
+        return responseBuilder.conflict(e.getMessage());
+    }
 }

@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Component
 public class FakePaymentGateway implements PaymentGateway {
-    private static final String LINK = "http://localhost:8080/fake-pay/%s";
+    private static final String LINK = "http://localhost:8081/fake-pay/%s";
 
     @Override
     public PaymentInfo createPayment(Long orderId, BigDecimal totalPrice) {

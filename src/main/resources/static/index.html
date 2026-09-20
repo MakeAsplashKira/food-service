@@ -169,7 +169,40 @@
           <div id="cartWho" class="small muted" style="margin:4px 0 8px"></div>
           <div id="cartItems"></div>
           <div class="total"><span>Итого</span><span id="cartTotal">0 ₽</span></div>
-          <button id="payBtn" class="primary" style="width:100%">Оплатить заказ</button>
+          <button id="checkoutBtn" class="primary" style="width:100%">Оформить заказ</button>
+          <div class="small muted" style="margin-top:8px">
+            <code>GET /order/checkout?brandId=</code> — предчек: цены и наличие берутся из остатков
+            точки, сам заказ не меняется.</div>
+        </div>
+
+        <div id="checkoutCard" class="card hide" style="margin-top:12px">
+          <div class="row"><h2 style="margin:0">Оформление</h2>
+            <span id="checkoutSrc" class="tag">—</span></div>
+          <div id="checkoutItems" style="margin-top:8px"></div>
+          <div class="total"><span>К оплате</span><span id="checkoutTotal">—</span></div>
+          <div id="checkoutAddr" class="small muted" style="margin-bottom:10px"></div>
+          <div class="field"><label>Комментарий магазину (до 100)</label>
+            <input id="coStore" value="Побольше соуса"></div>
+          <div class="field"><label>Комментарий курьеру (до 100)</label>
+            <input id="coCourier" value="Код домофона 42"></div>
+          <div class="field"><label>Способ оплаты</label>
+            <select id="coMethod">
+              <option value="DEBIT_CARD">DEBIT_CARD</option>
+              <option value="CASH_ON_DELIVERY">CASH_ON_DELIVERY</option>
+            </select></div>
+          <button id="payBtn" class="primary" style="width:100%">Оплатить</button>
+          <div class="small muted" style="margin-top:8px">
+            <code>POST /order/checkout</code> → <code>{id, link}</code>: фиксирует цены в позициях,
+            проставляет точку и статус <code>AWAITING_PAYMENT</code>.</div>
+        </div>
+
+        <div id="paymentCard" class="card hide" style="margin-top:12px">
+          <div class="row"><h2 style="margin:0">Платёж</h2>
+            <span id="payState" class="tag">ждёт оплаты</span></div>
+          <div id="paymentInfo" class="small" style="margin:8px 0"></div>
+          <button id="webhookBtn" class="primary" style="width:100%">Подтвердить оплату (вебхук)</button>
+          <button id="webhookFailBtn" class="ghost" style="width:100%;margin-top:6px">
+            Прислать статус FAIL</button>
           <div id="payNote" class="small muted" style="margin-top:8px"></div>
         </div>
       </div>
@@ -185,8 +218,8 @@
           <span id="userState" class="tag">не залогинен</span></div>
         <p class="small muted">Покупатель. Номер телефона + пароль.
           На регистрации поле называется <code>phone</code>, на входе — <code>number</code>.</p>
-        <div class="field"><label>Телефон (8–15 символов)</label><input id="uPhone" value="79990001122"></div>
-        <div class="field"><label>Пароль (8–60)</label><input id="uPass" type="text" value="password123"></div>
+        <div class="field"><label>Телефон (8–15 символов)</label><input id="uPhone" value="12345678"></div>
+        <div class="field"><label>Пароль (8–60)</label><input id="uPass" type="text" value="12345678"></div>
         <div class="row">
           <button id="uReg" class="primary">Регистрация</button>
           <button id="uLogin">Вход</button>
@@ -201,9 +234,9 @@
         <div class="row"><h2 style="margin:0">Бренд</h2><div class="grow"></div>
           <span id="brandState" class="tag">не залогинен</span></div>
         <p class="small muted">Владелец сети. Регистрация — <b>multipart</b>, картинка обязательна.</p>
-        <div class="field"><label>Название</label><input id="bName" value="Вкусно и точка"></div>
-        <div class="field"><label>Email</label><input id="bEmail" value="brand@test.ru"></div>
-        <div class="field"><label>Пароль (8–60)</label><input id="bPass" type="text" value="password123"></div>
+        <div class="field"><label>Название</label><input id="bName" value="Пятёрочка"></div>
+        <div class="field"><label>Email</label><input id="bEmail" value="paterochka@mail.ru"></div>
+        <div class="field"><label>Пароль (8–60)</label><input id="bPass" type="text" value="12345678"></div>
         <div class="field"><label>Логотип (если пусто — сгенерирую заглушку)</label><input id="bImg" type="file" accept="image/*"></div>
         <div class="row">
           <button id="bReg" class="primary">Регистрация</button>
@@ -222,8 +255,8 @@
           Своей регистрации у магазина <b>нет</b>: точку заводит бренд из своего кабинета
           (<code>POST /brand/store</code>). Здесь только вход.
         </p>
-        <div class="field"><label>Email</label><input id="sEmail" value="store1@test.ru"></div>
-        <div class="field"><label>Пароль (8–60)</label><input id="sPass" type="text" value="password123"></div>
+        <div class="field"><label>Email</label><input id="sEmail" value="paterochka1@mail.ru"></div>
+        <div class="field"><label>Пароль (8–60)</label><input id="sPass" type="text" value="12345678"></div>
         <div class="row">
           <button id="sLogin" class="primary">Вход</button>
           <button id="sOut" class="ghost">Выйти</button>
@@ -249,8 +282,8 @@
     <div id="brandCab" class="hide grid cols3">
       <div class="card">
         <h2>Новая точка (магазин)</h2>
-        <div class="field"><label>Email</label><input id="nsEmail" value="store1@test.ru"></div>
-        <div class="field"><label>Пароль (8–64)</label><input id="nsPass" type="text" value="password123"></div>
+        <div class="field"><label>Email</label><input id="nsEmail" value="paterochka2@mail.ru"></div>
+        <div class="field"><label>Пароль (8–64)</label><input id="nsPass" type="text" value="12345678"></div>
         <div class="field"><label>Адрес</label><input id="nsAddr" value="Москва, Тверская 1"></div>
         <button id="nsAdd" class="primary">Создать</button>
         <div class="small muted" style="margin-top:8px"><code>POST /brand/store</code> → <code>{id, email, address}</code></div>
@@ -260,10 +293,12 @@
         <div class="field"><label>externalProductId</label><input id="npExt" value="SKU-001"></div>
         <div class="field"><label>Название</label><input id="npName" value="Бургер"></div>
         <div class="field"><label>Категория</label><input id="npCat" value="Бургеры"></div>
+        <div class="field"><label>Картинка (если пусто — сгенерирую заглушку)</label>
+          <input id="npImg" type="file" accept="image/*"></div>
         <button id="npAdd" class="primary">Добавить</button>
         <div class="small muted" style="margin-top:8px">
-          <code>POST /brand/product</code> — <b>без картинки</b>, imageUrl бек ставит хардкодом
-          <code>/brand/bebend</code>.
+          <code>POST /brand/product</code> — <b>multipart</b>: часть <code>request</code> (JSON)
+          и обязательная часть <code>image</code>, файл уходит в <code>FileStorageService</code>.
         </div>
       </div>
       <div class="card">
@@ -306,12 +341,37 @@
       </div>
       <div class="card">
         <div class="row"><h3 style="margin:0">Остатки</h3>
-          <span id="stockSrc" class="tag">—</span></div>
+          <span id="stockSrc" class="tag">—</span>
+          <div class="grow"></div>
+          <button id="reloadStock" class="ghost small">обновить</button></div>
         <table style="margin-top:8px"><tbody id="stockCreated"></tbody></table>
         <div class="small muted" style="margin-top:6px">
           Ручки <code>GET /store/stock</code> нет — таблица собирается из витрины
           <code>GET /brand/{brandId}/products</code> (brandId берётся из токена магазина)
-          и отфильтрована по своему storeId.</div>
+          и отфильтрована по своему storeId. Удаление —
+          <code>DELETE /store/stock/product/{productId}</code>.</div>
+      </div>
+
+      <div class="card">
+        <h2>Статус заказа</h2>
+        <p class="small muted">
+          Обычно эти запросы шлёт <b>partner-store</b> на :8081 — он получает пуш об оплате и сам
+          двигает заказ по таймеру. Здесь то же самое руками, чтобы видеть ручку вживую.
+        </p>
+        <div class="field"><label>orderId</label><input id="soId" type="number" value="1"></div>
+        <div class="field"><label>Новый статус</label>
+          <select id="soStatus">
+            <option value="ACCEPTED">ACCEPTED</option>
+            <option value="PREPARING">PREPARING</option>
+            <option value="READY">READY</option>
+          </select></div>
+        <button id="soSend" class="primary">Отправить</button>
+        <div id="soNote" class="small muted" style="margin-top:8px"></div>
+        <div class="small muted" style="margin-top:8px">
+          <code>PATCH /store/order/{orderId}</code> — заказ ищется по паре
+          <code>(orderId, storeId из токена)</code>, чужой заказ даст 404. Разрешена только цепочка
+          <code>PENDING→ACCEPTED→PREPARING→READY</code>, шаг через ступеньку — 400,
+          повтор того же статуса — 200.</div>
       </div>
     </div>
   </section>
@@ -353,7 +413,12 @@
   <p class="small muted" style="margin:16px 0 40px">
     Страница лежит в <code>src/main/resources/static/index.html</code> и раздаётся самим Spring —
     открывай <b>http://localhost:8080/api/v1/</b>, тогда нет проблем с CORS.
-    Если открыть файл напрямую (file://), браузер зарубит все запросы: CORS в проекте не настроен.
+    Если открыть файл напрямую (file://), браузер зарубит все запросы: CORS в проекте не настроен.<br><br>
+    После вебхука заказ уезжает в <b>partner-store</b> (<code>docker compose up -d partner-store</code>,
+    порт 8081) — отдельное приложение, имитация кассы магазина. Оно получает
+    <code>POST /orders</code> и само дёргает <code>PATCH /store/order/{id}</code> по таймеру:
+    <code>ACCEPTED</code> через 5 с, <code>PREPARING</code> через 15 с, <code>READY</code> через 30 с.
+    Смотреть — <code>docker compose logs -f partner-store</code>.
   </p>
 </div>
 
@@ -363,22 +428,24 @@
 /* ============================================================
    Состояние
    ============================================================ */
-const LS = 'fs_demo_v2';
+const LS = 'fs_demo_v3';
 const state = {
   apiBase: '',
   tokens: { user:null, brand:null, store:null },
   brands: [],
   offers: {},          // brandId -> [ProductOfferResponse]
-  order: null,         // OrderInfo с бэкенда
+  order: null,         // OrderInfo (только черновик: GET /order отдаёт лишь DRAFT)
+  checkout: null,      // ViewCheckoutResponse, живёт до оплаты
+  payment: null,       // {orderId, paymentId, link, total, paid} — единственная память
+                       // о заказе после оформления: прочитать его с бека нечем
   selectedBrand: null,
-  selectedStore: null,
-  demoSeq: { order: -1 }
+  selectedStore: null
 };
 
 function save(){
   localStorage.setItem(LS, JSON.stringify({
     apiBase: state.apiBase, tokens: state.tokens,
-    selectedBrand: state.selectedBrand, demoSeq: state.demoSeq
+    selectedBrand: state.selectedBrand, payment: state.payment
   }));
 }
 function load(){
@@ -494,7 +561,8 @@ function myBrandId(role){
    ============================================================ */
 const ROUTES = [
   {m:'POST', p:'/user',        a:'public', in:'{phone, password}', out:'{token}'},
-  {m:'POST', p:'/user/login',  a:'public', in:'{number, password}', out:'{token}'},
+  {m:'POST', p:'/user/login',  a:'public', in:'{number, password}', out:'{token}',
+   note:'на регистрации поле называется phone, на входе — number'},
 
   {m:'POST', p:'/brand',       a:'public',
    in:'multipart: request (JSON {name,email,password}) + image (обязательна)', out:'{token}'},
@@ -503,8 +571,11 @@ const ROUTES = [
   {m:'GET',  p:'/brand/{brandId}/products', a:'public', in:'—',
    out:'[{id (stockId), productId, storeId, name, category, availableQuantity, unitPrice, imageUrl}]',
    note:'витрина: join products × stocks по первой точке бренда'},
-  {m:'POST', p:'/brand/product', a:'BRAND', in:'{externalProductId, name, category}',
-   out:'{id, name, category, imageUrl}'},
+  {m:'POST', p:'/brand/product', a:'BRAND',
+   in:'multipart: request (JSON {externalProductId,name,category}) + image (обязательна)',
+   out:'{id, name, category, imageUrl}',
+   note:'раньше был JSON с хардкодом imageUrl — теперь картинка грузится через FileStorageService'},
+  {m:'DELETE', p:'/brand/product/{productId}', a:'BRAND', in:'—', out:'null'},
   {m:'POST', p:'/brand/store',   a:'BRAND', in:'{email, password, address}', out:'{id, email, address}'},
   {m:'GET',  p:'/brand/stores',  a:'BRAND', in:'—', out:'[{id, email, address}]', probe:'/brand/stores', role:'brand'},
   {m:'GET',  p:'/brand/products',a:'BRAND', in:'—', out:'[{id, name, category, imageUrl}]',
@@ -513,6 +584,10 @@ const ROUTES = [
   {m:'POST', p:'/store/login', a:'public', in:'{email, password}', out:'{token} (+ brandId в claims)'},
   {m:'POST', p:'/store/stock?productId=', a:'STORE', in:'{availableQuantity, unitPrice}',
    out:'{id, storeId, productId, availableQuantity, unitPrice}'},
+  {m:'DELETE', p:'/store/stock/product/{productId}', a:'STORE', in:'—', out:'null'},
+  {m:'PATCH', p:'/store/order/{orderId}', a:'STORE', in:'{status}', out:'null',
+   note:'магазину разрешены только PENDING→ACCEPTED→PREPARING→READY; тот же статус повторно — 200, ' +
+        'чужой переход — 400. Обычно эту ручку дёргает partner-store на :8081, но её можно позвать и руками из кабинета магазина'},
 
   {m:'POST', p:'/order/item', a:'USER', in:'{brandId, productId}',
    out:'OrderInfo { id, brandId, status, orderItems[{id, productId, requestedQuantity}] }',
@@ -523,10 +598,22 @@ const ROUTES = [
    note:'на 1 шт удаляет позицию, на последней позиции — весь заказ'},
   {m:'PATCH',p:'/order/item/{orderItemId}', a:'USER', in:'{requestedQuantity}', out:'null'},
   {m:'GET',  p:'/order?brandId=', a:'USER', in:'—', out:'OrderInfo',
-   broken:'если черновика нет — OrderNotFoundException → 400, хотя пустая корзина это норма',
+   note:'отдаёт только черновик (DRAFT). Нет черновика — 404, после оформления заказ отсюда пропадает',
    probe:'/order?brandId=1', role:'user'},
 
-  {m:'GET',  p:'/static/**', a:'public', in:'—', out:'файлы из storage (картинки брендов)'}
+  {m:'GET',  p:'/order/checkout?brandId=', a:'USER', in:'—',
+   out:'ViewCheckoutResponse { id, brandId, totalPrice, checkoutItems[{orderItemId, productId, name, ' +
+       'category, imageUrl, available, requestedQuantity, unitPrice}], userInfo{address} }',
+   note:'предчек: цена и наличие берутся из stocks точки, заказ при этом не меняется',
+   probe:'/order/checkout?brandId=1', role:'user'},
+  {m:'POST', p:'/order/checkout', a:'USER',
+   in:'{brandId, commentToStore, commentToCourier, paymentMethod: DEBIT_CARD | CASH_ON_DELIVERY}',
+   out:'{id (paymentId), link}',
+   note:'фиксирует цены в позициях, ставит storeId и AWAITING_PAYMENT, заводит платёж в FakePaymentGateway'},
+  {m:'POST', p:'/order/payment/webhook', a:'public', in:'{paymentId, status: "SUCCESS" | …}', out:'null',
+   note:'колбэк платёжки: SUCCESS → заказ PENDING и событие OrderPaid → POST http://localhost:8081/orders партнёру'},
+
+  {m:'GET',  p:'/static/**', a:'public', in:'—', out:'файлы из storage (картинки брендов и продуктов)'}
 ];
 
 function renderRoutes(){
@@ -559,82 +646,94 @@ async function probeRoutes(){
    Список пробелов в API
    ============================================================ */
 const GAPS = [
-  { done:true, t:'Витрина продуктов — есть',
-    d:'<code>GET /brand/{brandId}/products</code> публичная, отдаёт join ' +
-      '<code>products × stocks</code> с ценой и остатком. Страница берёт витрину оттуда. ' +
-      'Осталось: точка выбирается как <code>stores.getFirst()</code>, покупатель на неё не влияет.' },
-  { done:true, t:'Списки в кабинетах — есть',
-    d:'<code>GET /brand/stores</code> и <code>GET /brand/products</code>, обе — id из ' +
-      'BrandPrincipal, без id в пути. <code>AddStoreResponse</code> теперь отдаёт ' +
-      '<code>id</code>, лишний round-trip ушёл.' },
-  { done:true, t:'Заказ можно собрать',
-    d:'<code>POST /order/item</code>, <code>increment</code>, <code>decrement</code>, ' +
-      'установка количества — всё живое и переписано под пару Product + Stock. ' +
-      'Корзина на странице больше не локальная.' },
+  { done:true, t:'Оплата и оформление — есть',
+    d:'<code>GET /order/checkout</code> считает предчек, <code>POST /order/checkout</code> фиксирует ' +
+      'цены в позициях, проставляет <code>storeId</code> и <code>AWAITING_PAYMENT</code>, ' +
+      '<code>FakePaymentGateway</code> отдаёт ссылку, <code>POST /order/payment/webhook</code> ' +
+      'переводит заказ в <code>PENDING</code>. Кнопка на странице больше ничего не рисует локально.' },
+  { done:true, t:'Позиция хранит снапшот товара',
+    d:'<code>Order.snapshotOrderItem</code> на чекауте кладёт в <code>order_items</code> ' +
+      '<code>name</code>, <code>unitPrice</code>, <code>category</code>, ' +
+      '<code>externalProductId</code>. Правда, <code>OrderItemInfo</code> их наружу не отдаёт — ' +
+      'см. ниже.' },
+  { done:true, t:'storeId у заказа заполняется',
+    d:'Точка выбирается на чекауте (<code>StoreCatalog.getStoreIdByBrandIdAndUserAdress</code>) ' +
+      'и пишется в <code>Order.storeId</code> — именно по нему магазин потом находит свой заказ ' +
+      'в <code>PATCH /store/order/{id}</code>.' },
+  { done:true, t:'Черновик ищется с учётом статуса',
+    d:'<code>findByUserIdAndBrandIdAndStatus(..., DRAFT)</code> — оплаченный заказ больше не ' +
+      'подхватывается как корзина, после оплаты <code>addOrderItem</code> заводит новый DRAFT.' },
+  { done:true, t:'Магазин двигает статус',
+    d:'<code>PATCH /store/order/{orderId}</code> + <code>OrderStatus.canMoveTo</code>: ' +
+      'магазину разрешены только <code>PENDING→ACCEPTED→PREPARING→READY</code>. Повтор того же ' +
+      'статуса — 200 (в <code>changeStatus</code> есть ранний выход), поэтому ретраи партнёра безопасны.' },
+  { done:true, t:'У продукта есть картинка',
+    d:'<code>POST /brand/product</code> стал multipart и грузит файл через ' +
+      '<code>FileStorageService</code>, как регистрация бренда. Хардкод <code>/brand/bebend</code> ушёл.' },
+  { done:true, t:'ddl-auto=validate',
+    d:'Схему держит Flyway (<code>V1…V5</code>), Hibernate только проверяет. Раньше был ' +
+      '<code>update</code>, и колонки расходились с миграциями.' },
+  { done:true, t:'Пустой заказ больше не 400',
+    d:'<code>OrderNotFoundException</code> теперь обрабатывается как <code>notFound</code>. ' +
+      '404 на «черновика ещё нет» — терпимо, хотя 200 с пустой корзиной был бы честнее.' },
 
-  { done:true, t:'GET /order отдаёт DTO',
-    d:'<code>OrderInfo { id, brandId, status, orderItems }</code> вместо сущности: ' +
-      'рекурсия <code>Order → orderItems → order</code> у Jackson ушла, <code>version</code> ' +
-      'наружу больше не течёт. <code>userId</code> и <code>storeId</code> из ответа убраны — ' +
-      'первый есть в токене, второй в черновике всегда null.' },
-  { done:true, t:'/order/** закрыт ролью USER',
-    d:'Раньше попадал под <code>/** → authenticated</code>, и токен бренда проходил security, ' +
-      'а <code>@AuthenticationPrincipal UserPrincipal</code> ловил <code>BrandPrincipal</code> ' +
-      '→ 500 вместо 403.' },
-  { done:true, t:'Слэш у setItemQuantity убран',
-    d:'<code>@PatchMapping("/item/{orderItemId}")</code>. Раньше слэш был частью маппинга, ' +
-      'и <code>PATCH /order/item/5</code> давал 404: в Spring 6+ trailing-slash match выключен.' },
+  { crit:true, t:'Заказ нельзя прочитать после оформления',
+    d:'<code>GET /order?brandId=</code> отдаёт только <code>DRAFT</code>. Как только заказ уходит ' +
+      'в <code>AWAITING_PAYMENT</code>, покупатель теряет его совсем: нет ни ' +
+      '<code>GET /order/{id}</code>, ни истории заказов. Страница после оплаты показывает заказ ' +
+      'по памяти из localStorage, а статус (ACCEPTED/PREPARING/READY) подсмотреть может только ' +
+      'в логах партнёра или прямо в базе.' },
+  { crit:true, t:'Вебхук оплаты ничем не защищён',
+    d:'<code>/order/payment/webhook</code> — <code>permitAll</code> без подписи. Зная ' +
+      '<code>paymentId</code>, оплату может подтвердить кто угодно (кнопка на этой странице ровно ' +
+      'это и делает). Нужен HMAC-заголовок от платёжки, как и у пуша в partner-store.' },
+  { crit:true, t:'Остатки не списываются',
+    d:'На чекауте <code>Stock.availableQuantity</code> только читается для проверки ' +
+      '<code>available</code>. После оплаты остаток в точке прежний — один и тот же товар можно ' +
+      'продать сколько угодно раз.' },
 
-  { crit:true, t:'Пустой заказ — это ошибка 400',
-    d:'<code>getOrder</code> кидает <code>OrderNotFoundException</code>, обработчик отдаёт ' +
-      '<code>badRequest</code>. Но «у покупателя пока нет черновика» — нормальное состояние ' +
-      'при первой загрузке страницы, а не ошибка ввода. Нужен 200 с пустым заказом ' +
-      '(или 404, но никак не 400).' },
-  { crit:true, t:'Нет оплаты',
-    d:'В <code>OrderStatus</code> нет <code>PAID</code>, ручки <code>POST /order/{id}/pay</code> ' +
-      'тоже нет. Заодно нужно: списать <code>Stock.availableQuantity</code>, ' +
-      'зафиксировать <code>OrderItem.unitPrice</code>, посчитать сумму. Кнопка рисует чек локально.' },
-
-  { t:'OrderItem не хранит снапшот товара',
-    d:'Колонки <code>name</code>, <code>unit_price</code>, <code>category</code>, ' +
-      '<code>external_product_id</code> в <code>order_items</code> есть, но заполняет их только ' +
-      'мёртвый <code>OrderItem.from(...)</code>. Живой конструктор ' +
-      '<code>OrderItem(order, productId)</code> кладёт только id и количество. ' +
-      'Поэтому страница дотягивает название и цену из витрины по <code>productId</code>.' },
-  { t:'Заказ привязан к бренду, а цена — к точке',
-    d:'Ключ черновика — <code>(userId, brandId)</code>, поле <code>Order.storeId</code> ' +
-      'никто не заполняет, в ответе оно всегда <code>null</code>. Цена же лежит в ' +
-      '<code>stocks(store_id, product_id)</code>. Пока покупатель не выбирает точку, ' +
-      'заказ не может сам посчитать сумму.' },
-  { t:'Черновик ищется без учёта статуса',
-    d:'<code>findByUserIdAndBrandId</code> вернёт и уже доставленный заказ. После первой ' +
-      'же покупки <code>addOrderItem</code> найдёт его и навсегда упрётся в ' +
-      '<code>OrderUnmodifiableException</code>. Нужен ' +
-      '<code>findByUserIdAndBrandIdAndStatus(..., DRAFT)</code>.' },
+  { t:'У магазина нет списка своих заказов',
+    d:'Есть только <code>PATCH /store/order/{orderId}</code>. Ни <code>GET /store/orders</code>, ' +
+      'ни <code>GET /store/order/{id}</code> нет, поэтому partner-store живёт исключительно на push ' +
+      'и на своей памяти: после его рестарта незакрытые заказы потеряны и добрать их неоткуда. ' +
+      'В кабинете магазина на этой странице id заказа приходится вводить руками.' },
+  { t:'OrderItemInfo не отдаёт снапшот',
+    d:'В <code>order_items</code> уже лежат <code>name</code> и <code>unitPrice</code>, но ' +
+      '<code>OrderItemInfo</code> — это <code>{id, productId, requestedQuantity}</code>. ' +
+      'Поэтому корзина по-прежнему дотягивает название и цену из витрины.' },
+  { t:'Адрес покупателя некуда записать',
+    d:'<code>ViewCheckoutResponse.userInfo.address</code> берётся из <code>users.address</code>, ' +
+      'но при регистрации адреса нет и ручки <code>PATCH /user</code> тоже. Поле всегда null, ' +
+      'а на чекауте оно и так ни на что не влияет: ' +
+      '<code>calculateStoreByBrandIdAndCoords</code> игнорирует адрес и берёт ' +
+      '<code>stores.getFirst()</code>.' },
+  { t:'Уведомление партнёра прибито гвоздями',
+    d:'<code>StoreNotifier</code> создаёт <code>RestClient</code> на каждый вызов и хардкодит ' +
+      '<code>http://localhost:8081</code> — ни свойства, ни ретрая. Плюс ' +
+      '<code>@Async</code> на <code>OrderPaidListener</code> сейчас пустой: в проекте нет ' +
+      '<code>@EnableAsync</code>, так что пуш уходит синхронно после коммита, и если партнёр лежит, ' +
+      'ждать будет покупатель.' },
+  { t:'Ссылка на оплату ведёт на порт партнёра',
+    d:'<code>FakePaymentGateway.LINK = "http://localhost:8081/fake-pay/{id}"</code>, а на 8081 ' +
+      'теперь слушает partner-store, у которого такой ручки нет. Ссылка ненастоящая (по ней никто ' +
+      'не ходит), но на демо это путает — стоит сменить порт или отдать заглушку.' },
   { t:'MAX_QUANTITY = 10 не связан с остатком',
-    d:'Потолок позиции захардкожен в <code>OrderItem</code>. Можно набрать 10 штук того, ' +
-      'чего в <code>Stock.availableQuantity</code> лежит 3.' },
-  { t:'Нет публичного списка точек бренда',
-    d:'<code>GET /brand/stores</code> закрыта ролью BRAND, а покупателю точки нужны, чтобы ' +
-      'выбрать, откуда везти. Сейчас страница знает только тот <code>storeId</code>, который ' +
-      'приехал внутри витрины.' },
+    d:'Потолок позиции захардкожен в <code>OrderItem</code>. Можно набрать 10 штук того, чего ' +
+      'в <code>Stock.availableQuantity</code> лежит 3 — поймается только на чекауте, ' +
+      'как <code>available:false</code>.' },
   { t:'Нет GET /store/stock',
-    d:'Остаток можно завести, но не прочитать. Кабинет магазина собирает свои остатки ' +
+    d:'Остаток можно завести и удалить, но не прочитать. Кабинет магазина собирает свои остатки ' +
       'из публичной витрины бренда и фильтрует по своему storeId — это обход, а не решение.' },
-  { t:'У продукта нет картинки',
-    d:'<code>BrandService.IMAGE_URL = "/brand/bebend"</code> проставляется каждому продукту. ' +
-      'Это не URL. У бренда загрузка через <code>FileStorageService</code> уже работает — ' +
-      'для продукта нужен такой же multipart.' },
+  { t:'Нет публичного списка точек бренда',
+    d:'<code>GET /brand/stores</code> закрыта ролью BRAND, а покупателю точки нужны, чтобы выбрать, ' +
+      'откуда везти. Сейчас страница знает только тот <code>storeId</code>, который приехал ' +
+      'внутри витрины.' },
   { t:'Нет базовых read-ручек',
     d:'Нет <code>GET /brand/{id}</code>, <code>GET /user/me</code>, истории заказов. ' +
       '<code>GET /brand</code> живёт в контроллере кабинета, хотя это каталожная ручка.' },
   { t:'CORS не настроен',
     d:'Ни <code>@CrossOrigin</code>, ни <code>http.cors(...)</code>. Пока фронт внутри того же ' +
-      'Spring — ок, отдельный dev-сервер не заведётся.' },
-  { t:'ddl-auto=update при включённом Flyway',
-    d:'<code>application.properties</code>: Hibernate дописывает схему мимо миграций, ' +
-      'в живой базе <code>NUMERIC(38,2)</code> вместо <code>NUMERIC(19,2)</code> из ' +
-      '<code>V1__init_schema.sql</code>. Правильно — <code>validate</code> и <code>V2__…</code>.' }
+      'Spring — ок, отдельный dev-сервер не заведётся.' }
 ];
 
 function renderGaps(){
@@ -801,6 +900,7 @@ function renderProducts(){
   const grid = document.getElementById('prodGrid');
   grid.innerHTML = list.map(o => {
     const out  = !o.availableQuantity;
+    const img  = imgUrl(o.imageUrl);
     const item = orderItemFor(o.productId);
     /* товар уже в заказе — карточка правит живую позицию, а не набирает количество заранее */
     const control = item
@@ -811,7 +911,9 @@ function renderProducts(){
         '<div class="small muted">в заказе · позиция #' + item.id + '</div>'
       : '<button class="primary" data-act="add"' + (out?' disabled':'') + '>В корзину</button>';
     return '<div class="card prod ' + (out?'out':'') + '" data-p="' + o.productId + '">' +
-      '<div class="thumb" style="height:80px;font-size:28px;border-radius:8px">🍟</div>' +
+      '<div class="thumb" style="height:80px;font-size:28px;border-radius:8px">' +
+        (img ? '<img src="' + img + '" alt="" onerror="this.replaceWith(document.createTextNode(\'🍟\'))">' : '🍟') +
+      '</div>' +
       '<div><b>' + esc(o.name) + '</b>' +
         '<div class="small muted">' + esc(o.category||'без категории') +
         ' · product #' + o.productId + ' · stock #' + o.id + '</div></div>' +
@@ -899,13 +1001,13 @@ function lineOf(item){
 function renderCart(){
   const box = document.getElementById('cartItems');
   const items = (state.order && state.order.orderItems) || [];
-  const payBtn = document.getElementById('payBtn');
+  const checkoutBtn = document.getElementById('checkoutBtn');
 
   if (!items.length){
     box.innerHTML = '<div class="muted small">Пусто</div>';
     document.getElementById('cartTotal').textContent = '0 ₽';
     document.getElementById('cartWho').textContent = '';
-    payBtn.disabled = true;
+    checkoutBtn.disabled = true;
     return;
   }
 
@@ -939,29 +1041,144 @@ function renderCart(){
 
   document.getElementById('cartTotal').innerHTML = total.toFixed(2) + ' ₽' +
     (guessed ? ' <span class="tag demo">счёт на клиенте</span>' : '');
-  payBtn.disabled = !editable;
+  checkoutBtn.disabled = !editable;
 }
 
-async function pay(){
-  const items = (state.order && state.order.orderItems) || [];
-  if (!items.length) return;
-  let total = 0;
-  items.forEach(it => { const l = lineOf(it); if (l.price != null) total += l.price * it.requestedQuantity; });
+/* ============================================================
+   Чекаут и оплата
+   Цепочка целиком: GET /order/checkout → POST /order/checkout →
+   POST /order/payment/webhook → заказ уезжает партнёру на :8081.
+   ============================================================ */
+async function openCheckout(){
+  if (!state.tokens.user){ toast('Сначала войди как пользователь', 'bad'); switchTab('accounts'); return; }
+  if (state.selectedBrand == null){ toast('Сначала выбери бренд', 'bad'); return; }
 
-  const orderId = state.order.id;
-  const paid = await api('POST', '/order/' + orderId + '/pay', {role:'user'});
-
-  if (paid.ok){
-    toast('Заказ #' + orderId + ' оплачен на бэкенде');
-    document.getElementById('payNote').innerHTML =
-      '<span class="tag live">backend</span> заказ #' + orderId + ' оплачен';
-  } else {
-    toast('Заказ #' + orderId + ' «оплачен» локально на ' + total.toFixed(2) + ' ₽', 'warnc');
-    document.getElementById('payNote').innerHTML =
-      '<span class="tag demo">demo</span> чек по заказу #' + orderId + ' на <b>' + total.toFixed(2) + ' ₽</b>, ' +
-      items.length + ' позиц. — ручки <code>POST /order/{id}/pay</code> в API нет (' + (paid.status||'нет связи') + '), ' +
-      'заказ остался в статусе ' + (state.order.status||'DRAFT') + ', остатки не списаны.';
+  const res = await api('GET', '/order/checkout', {role:'user', query:{brandId: state.selectedBrand}});
+  if (!res.ok){
+    document.getElementById('checkoutCard').classList.add('hide');
+    toast('Чекаут: ' + (res.error || res.status), 'bad');
+    return;
   }
+  state.checkout = res.data;
+  document.getElementById('checkoutCard').classList.remove('hide');
+  renderCheckout();
+}
+
+function renderCheckout(){
+  const co = state.checkout;
+  const card = document.getElementById('checkoutCard');
+  if (!co){ card.classList.add('hide'); return; }
+
+  const items = co.checkoutItems || [];
+  const bad = items.filter(i => !i.available);
+
+  badge(document.getElementById('checkoutSrc'), bad.length ? 'demo' : 'live',
+        'заказ #' + co.id + ' · позиций ' + items.length);
+
+  document.getElementById('checkoutItems').innerHTML = items.map(i =>
+    '<div class="citem"><div class="grow"><b class="small">' + esc(i.name || ('product #' + i.productId)) + '</b>' +
+      '<div class="small muted">' +
+        (i.unitPrice == null ? 'нет в остатках' : Number(i.unitPrice).toFixed(2) + ' ₽') +
+        ' × ' + i.requestedQuantity +
+        (i.available ? '' : ' <span class="tag err">не хватает</span>') +
+      '</div></div></div>').join('');
+
+  document.getElementById('checkoutTotal').textContent = Number(co.totalPrice ?? 0).toFixed(2) + ' ₽';
+
+  const addr = co.userInfo && co.userInfo.address;
+  document.getElementById('checkoutAddr').innerHTML = addr
+    ? 'Адрес: ' + esc(addr)
+    : '<span class="tag demo">адрес null</span> при регистрации его не спрашивают, ' +
+      'а ручки, чтобы задать, нет. На выбор точки он всё равно не влияет: бек берёт ' +
+      '<code>stores.getFirst()</code>.';
+
+  const payBtn = document.getElementById('payBtn');
+  payBtn.disabled = !items.length || bad.length > 0;
+  payBtn.title = bad.length ? 'POST /order/checkout ответит 409: не хватает остатка' : '';
+}
+
+async function payNow(){
+  const co = state.checkout;
+  if (!co) return;
+
+  const res = await api('POST', '/order/checkout', {role:'user', body:{
+    brandId: state.selectedBrand,
+    commentToStore: document.getElementById('coStore').value,
+    commentToCourier: document.getElementById('coCourier').value,
+    paymentMethod: document.getElementById('coMethod').value
+  }});
+
+  if (!res.ok){ toast('Оформление: ' + (res.error || res.status), 'bad'); return; }
+
+  state.payment = {
+    orderId: co.id,
+    paymentId: res.data.id,
+    link: res.data.link,
+    total: co.totalPrice,
+    paid: false
+  };
+  state.checkout = null;
+  save();
+
+  document.getElementById('checkoutCard').classList.add('hide');
+  renderPayment();
+  toast('Заказ #' + state.payment.orderId + ' ждёт оплаты');
+  await loadOrder();     /* черновика больше нет: заказ ушёл в AWAITING_PAYMENT */
+}
+
+function renderPayment(){
+  const pm = state.payment;
+  const card = document.getElementById('paymentCard');
+  if (!pm){ card.classList.add('hide'); return; }
+  card.classList.remove('hide');
+
+  badge(document.getElementById('payState'), pm.paid ? 'live' : 'demo',
+        pm.paid ? 'оплачен' : 'ждёт оплаты');
+
+  document.getElementById('paymentInfo').innerHTML =
+    'Заказ <b>#' + pm.orderId + '</b> · ' + Number(pm.total ?? 0).toFixed(2) + ' ₽<br>' +
+    '<span class="muted">paymentId</span> <code>' + esc(pm.paymentId) + '</code><br>' +
+    '<span class="muted">link</span> <code>' + esc(pm.link || '—') + '</code>' +
+    '<div class="muted" style="margin-top:6px">Ссылку выдаёт <code>FakePaymentGateway</code>, ' +
+    'открывать её бесполезно: на 8081 сейчас живёт partner-store.</div>';
+
+  document.getElementById('webhookBtn').disabled = pm.paid;
+  document.getElementById('webhookFailBtn').disabled = pm.paid;
+}
+
+async function sendWebhook(status){
+  const pm = state.payment;
+  if (!pm) return;
+
+  /* ручка публичная (permitAll) — токен не нужен, подписи тоже нет */
+  const res = await api('POST', '/order/payment/webhook',
+    {body:{paymentId: pm.paymentId, status}});
+
+  const note = document.getElementById('payNote');
+
+  if (!res.ok){
+    note.innerHTML = '<span class="tag err">вебхук ' + res.status + '</span> ' + esc(res.error || '');
+    toast('Вебхук: ' + (res.error || res.status), 'bad');
+    return;
+  }
+
+  if (status !== 'SUCCESS'){
+    note.innerHTML = '<span class="tag demo">200, но ничего не изменилось</span> ' +
+      'при не-SUCCESS сервис кидает <code>PaymentGatewayException</code>, а обработчик отвечает ' +
+      '<code>ok(null)</code> и только пишет в лог. Снаружи провал оплаты неотличим от успеха.';
+    toast('FAIL отправлен: статус заказа не изменился', 'warnc');
+    return;
+  }
+
+  pm.paid = true;
+  save();
+  renderPayment();
+  note.innerHTML = '<span class="tag live">оплачено</span> заказ #' + pm.orderId +
+    ' перешёл в <code>PENDING</code>, монолит отправил <code>POST /orders</code> партнёру на :8081. ' +
+    'Дальше партнёр сам двигает статус: <code>ACCEPTED</code> → <code>PREPARING</code> → ' +
+    '<code>READY</code>. Увидеть это можно в <code>docker compose logs -f partner-store</code> ' +
+    'или в базе — ручки, чтобы покупатель прочитал свой оплаченный заказ, в API нет.';
+  toast('Заказ #' + pm.orderId + ' оплачен');
   await loadOrder();
 }
 
@@ -997,8 +1214,11 @@ async function loadBrandProducts(){
     badge(el, 'live', 'backend · ' + res.data.length);
     tb.innerHTML = res.data.map(p =>
       '<tr><td>#' + p.id + '</td><td>' + esc(p.name) + '</td>' +
-      '<td class="muted small">' + esc(p.category||'') + '</td></tr>').join('')
-      || '<tr><td colspan="3" class="muted small">продуктов ещё нет</td></tr>';
+      '<td class="muted small">' + esc(p.category||'') + '</td>' +
+      '<td><button class="ghost small" data-delprod="' + p.id + '">удалить</button></td></tr>').join('')
+      || '<tr><td colspan="4" class="muted small">продуктов ещё нет</td></tr>';
+    tb.querySelectorAll('[data-delprod]').forEach(b =>
+      b.onclick = () => deleteProduct(Number(b.dataset.delprod)));
     return res.data;
   }
   badge(el, 'err', res.status || 'нет связи');
@@ -1020,11 +1240,47 @@ async function loadStock(){
     tb.innerHTML = mine.map(o =>
       '<tr><td>product #' + o.productId + '</td><td>' + esc(o.name) + '</td>' +
       '<td>' + o.availableQuantity + ' шт</td>' +
-      '<td>' + Number(o.unitPrice).toFixed(2) + ' ₽</td></tr>').join('')
+      '<td>' + Number(o.unitPrice).toFixed(2) + ' ₽</td>' +
+      '<td><button class="ghost small" data-delstock="' + o.productId + '">удалить</button></td></tr>').join('')
       || '<tr><td class="muted small">остатков ещё нет</td></tr>';
+    tb.querySelectorAll('[data-delstock]').forEach(b =>
+      b.onclick = () => deleteStock(Number(b.dataset.delstock)));
   } else {
     badge(el, 'err', res.status || 'нет связи');
     tb.innerHTML = '<tr><td class="bad small">' + esc(res.error||'ошибка') + '</td></tr>';
+  }
+}
+
+async function deleteProduct(productId){
+  const res = await api('DELETE', '/brand/product/' + productId, {role:'brand'});
+  if (res.ok){ toast('Продукт #' + productId + ' удалён'); loadBrandProducts(); }
+  else toast('Удаление продукта: ' + (res.error || res.status), 'bad');
+}
+
+async function deleteStock(productId){
+  const res = await api('DELETE', '/store/stock/product/' + productId, {role:'store'});
+  if (res.ok){ toast('Остаток по product #' + productId + ' удалён'); loadStock(); }
+  else toast('Удаление остатка: ' + (res.error || res.status), 'bad');
+}
+
+/* Ровно то, что делает partner-store, только руками */
+async function changeOrderStatus(){
+  const orderId = Number(document.getElementById('soId').value);
+  const status = document.getElementById('soStatus').value;
+  const note = document.getElementById('soNote');
+
+  const res = await api('PATCH', '/store/order/' + orderId, {role:'store', body:{status}});
+
+  if (res.ok){
+    note.innerHTML = '<span class="tag live">200</span> заказ #' + orderId + ' → <code>' + status + '</code>';
+    toast('Заказ #' + orderId + ': ' + status);
+  } else {
+    note.innerHTML = '<span class="tag err">' + res.status + '</span> ' + esc(res.error || '') +
+      (res.status === 404 ? '<div class="muted" style="margin-top:4px">404 — заказа с таким id ' +
+        'у этой точки нет: заказ привязывается к storeId только на чекауте.</div>' : '') +
+      (res.status === 400 ? '<div class="muted" style="margin-top:4px">400 — переход запрещён ' +
+        '<code>OrderStatus.canMoveTo</code>: ступеньку перепрыгнуть нельзя.</div>' : '');
+    toast('Статус: ' + (res.error || res.status), 'bad');
   }
 }
 
@@ -1067,7 +1323,10 @@ function bind(){
   document.getElementById('reloadOrder').onclick = loadOrder;
   document.getElementById('probeRoutes').onclick = probeRoutes;
   document.getElementById('clearLog').onclick = () => document.getElementById('log').innerHTML='';
-  document.getElementById('payBtn').onclick = pay;
+  document.getElementById('checkoutBtn').onclick = openCheckout;
+  document.getElementById('payBtn').onclick = payNow;
+  document.getElementById('webhookBtn').onclick = () => sendWebhook('SUCCESS');
+  document.getElementById('webhookFailBtn').onclick = () => sendWebhook('FAIL');
 
   /* --- user --- */
   document.getElementById('uReg').onclick = async () => {
@@ -1135,10 +1394,15 @@ function bind(){
     } else toast('Создание точки: ' + res.error, 'bad');
   };
   document.getElementById('npAdd').onclick = async () => {
-    const res = await api('POST', '/brand/product', {role:'brand', body:{
+    /* ручка стала multipart, как регистрация бренда: JSON-часть + обязательная картинка */
+    const name = document.getElementById('npName').value;
+    const fd = new FormData();
+    fd.append('request', new Blob([JSON.stringify({
       externalProductId: document.getElementById('npExt').value,
-      name: document.getElementById('npName').value,
-      category: document.getElementById('npCat').value }});
+      name, category: document.getElementById('npCat').value })], {type:'application/json'}));
+    const f = document.getElementById('npImg').files[0];
+    fd.append('image', f || await placeholderImage(name), f ? f.name : 'product.png');
+    const res = await api('POST', '/brand/product', {role:'brand', form: fd});
     if (res.ok){
       document.getElementById('stProd').value = res.data.id;
       loadBrandProducts();
@@ -1147,6 +1411,8 @@ function bind(){
   };
 
   /* --- store cabinet --- */
+  document.getElementById('reloadStock').onclick = loadStock;
+  document.getElementById('soSend').onclick = changeOrderStatus;
   document.getElementById('stAdd').onclick = async () => {
     const productId = Number(document.getElementById('stProd').value);
     const res = await api('POST', '/store/stock', {role:'store', query:{productId}, body:{
@@ -1162,7 +1428,7 @@ function bind(){
    ============================================================ */
 load();
 if (!state.apiBase) state.apiBase = defaultBase();
-bind(); checkEnv(); renderRoutes(); renderGaps(); renderAuth(); renderCart();
+bind(); checkEnv(); renderRoutes(); renderGaps(); renderAuth(); renderCart(); renderPayment();
 loadBrands().then(() => { if (state.selectedBrand != null) openBrand(state.selectedBrand); });
 </script>
 </body>

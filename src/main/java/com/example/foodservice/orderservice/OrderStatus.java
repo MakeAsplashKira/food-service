@@ -10,5 +10,16 @@ public enum OrderStatus {
     READY,
     DELIVERING,
     DELIVERED,
-    CANCELED
+    CANCELED;
+
+    public boolean canMoveTo(OrderStatus newStatus) {
+        return switch (this) {
+            case PENDING -> newStatus == ACCEPTED;
+            case ACCEPTED -> newStatus == PREPARING;
+            case PREPARING -> newStatus == READY;
+            case READY -> newStatus == DELIVERING;
+            case DELIVERING -> newStatus == DELIVERED;
+            default -> false;
+        };
+    }
 }
