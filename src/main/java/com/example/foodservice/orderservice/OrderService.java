@@ -7,6 +7,7 @@ import com.example.foodservice.orderservice.dto.CheckoutDTO.CheckoutItemInfo;
 import com.example.foodservice.orderservice.dto.CheckoutDTO.GetCheckoutCommand;
 import com.example.foodservice.orderservice.dto.OrderDTO.AddOrderItemCommand;
 import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
+import com.example.foodservice.orderservice.dto.OrderDTO.GetUserOrdersCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
 import com.example.foodservice.orderservice.dto.OrderStatusDTO.OrderStatusChangeCommand;
@@ -125,7 +126,7 @@ public class OrderService {
         List<Long> productIds = order.extractProductIdsFromItems();
 
         //TODO: опять же дальше будем передавать longitude, latitude, пока что просто адрес как заглушку
-        Long storeId = storeCatalog.getStoreIdByBrandIdAndUserAdress(brandId, userInfo.address());
+        Long storeId = storeCatalog.getStoreIdByBrandIdAndUserAddress(brandId, userInfo.address());
         List<StockInfo> stockInfo = storeCatalog.findStockByStoreIdAndProductIds(storeId, productIds);
 
         List<ProductInfo> productInfo = productCatalog.getProductsByIdsForOrder(productIds);
@@ -162,6 +163,9 @@ public class OrderService {
                 order.snapshotOrderItem(orderItem, checkoutItem);
             } else throw new OrderItemUnavailableException(orderItem.getId());
         }
+
+        storeCatalog.reserveStoreStock(checkoutInfo.storeId(), order.getProductsToReserve());
+
         order.prepareForPayment(checkoutInfo,
                 command.commentToStore(),
                 command.commentToCourier(),
@@ -191,6 +195,19 @@ public class OrderService {
                 .orElseThrow(()-> new OrderNotFoundByStoreException(command.orderId(), command.storeId()));
 
         order.changeStatus(command.newOrderStatus());
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderInfo> getUserOrders(GetUserOrdersCommand command) {
+        List<Order> orders;
+        if (command.active()) {
+            orders = orderRepository.findActiveByUserId(command.userId());
+        } else {
+            orders = orderRepository.findInactiveByUserId(command.userId());
+        }
+
+
+        return orders.stream().map(OrderInfo::from).toList();
     }
 
 

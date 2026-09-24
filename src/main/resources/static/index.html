@@ -119,6 +119,7 @@
 
   <div class="tabs" id="tabs">
     <button data-tab="catalog" class="on">Каталог</button>
+    <button data-tab="orders">Мои заказы</button>
     <button data-tab="accounts">Аккаунты</button>
     <button data-tab="brandcab">Кабинет бренда</button>
     <button data-tab="storecab">Кабинет магазина</button>
@@ -206,6 +207,31 @@
           <div id="payNote" class="small muted" style="margin-top:8px"></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= МОИ ЗАКАЗЫ ================= -->
+  <section id="tab-orders" class="hide">
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0">Мои заказы</h2>
+        <span id="placedSrc" class="tag">—</span>
+        <div class="grow"></div>
+        <div class="tabs" style="margin:0">
+          <button id="poActive" class="on">Активные</button>
+          <button id="poDone">Завершённые</button>
+        </div>
+        <button id="reloadPlaced" class="ghost small">обновить</button>
+        <label class="small muted row" style="white-space:nowrap;gap:5px">
+          <input type="checkbox" id="poAuto" style="width:auto" checked> авто, 3 с</label>
+      </div>
+      <p class="small muted" style="margin:10px 0 0">
+        <code>GET /order/placed?active=true</code> — всё, что не <code>DRAFT</code>,
+        не <code>DELIVERED</code> и не <code>CANCELED</code>;
+        <code>active=false</code> — наоборот, только <code>DELIVERED</code> и <code>CANCELED</code>.
+        Корзина сюда не попадает: она живёт в <code>GET /order?brandId=</code>.
+      </p>
+      <div id="placedList" class="grid cols2" style="margin-top:12px"></div>
     </div>
   </section>
 
@@ -439,7 +465,10 @@ const state = {
   payment: null,       // {orderId, paymentId, link, total, paid} — единственная память
                        // о заказе после оформления: прочитать его с бека нечем
   selectedBrand: null,
-  selectedStore: null
+  selectedStore: null,
+  placed: [],          // ответ GET /order/placed
+  placedActive: true,  // какой фильтр выбран
+  pollTimer: null      // автообновление списка, чтобы видеть работу partner-store
 };
 
 function save(){
@@ -601,6 +630,12 @@ const ROUTES = [
    note:'отдаёт только черновик (DRAFT). Нет черновика — 404, после оформления заказ отсюда пропадает',
    probe:'/order?brandId=1', role:'user'},
 
+  {m:'GET',  p:'/order/placed?active=', a:'USER', in:'—',
+   out:'[UserOrdersResponse { id, brandId, status, pendingAt, orderItems[{id, productId, ' +
+       'requestedQuantity, unitPrice}] }]',
+   note:'active=true — всё, кроме DRAFT, DELIVERED и CANCELED; active=false — только DELIVERED ' +
+        'и CANCELED. unitPrice берётся из снапшота позиции, то есть заполнен с момента чекаута',
+   probe:'/order/placed?active=true', role:'user'},
   {m:'GET',  p:'/order/checkout?brandId=', a:'USER', in:'—',
    out:'ViewCheckoutResponse { id, brandId, totalPrice, checkoutItems[{orderItemId, productId, name, ' +
        'category, imageUrl, available, requestedQuantity, unitPrice}], userInfo{address} }',
@@ -677,12 +712,17 @@ const GAPS = [
     d:'<code>OrderNotFoundException</code> теперь обрабатывается как <code>notFound</code>. ' +
       '404 на «черновика ещё нет» — терпимо, хотя 200 с пустой корзиной был бы честнее.' },
 
-  { crit:true, t:'Заказ нельзя прочитать после оформления',
-    d:'<code>GET /order?brandId=</code> отдаёт только <code>DRAFT</code>. Как только заказ уходит ' +
-      'в <code>AWAITING_PAYMENT</code>, покупатель теряет его совсем: нет ни ' +
-      '<code>GET /order/{id}</code>, ни истории заказов. Страница после оплаты показывает заказ ' +
-      'по памяти из localStorage, а статус (ACCEPTED/PREPARING/READY) подсмотреть может только ' +
-      'в логах партнёра или прямо в базе.' },
+  { done:true, t:'Оплаченный заказ видно покупателю',
+    d:'<code>GET /order/placed?active=</code> отдаёт заказы пользователя: активные — всё, кроме ' +
+      '<code>DRAFT</code>, <code>DELIVERED</code> и <code>CANCELED</code>, завершённые — наоборот. ' +
+      'Вкладка «Мои заказы» живёт на ней и раз в 3 секунды показывает, как partner-store двигает ' +
+      'статус. Осталось по мелочи: <code>GET /order/{id}</code> для одного заказа всё ещё нет, ' +
+      'позиции приходят без названия (только <code>productId</code> и <code>unitPrice</code>), ' +
+      'а суммы заказа в ответе нет — страница складывает её сама.' },
+  { t:'Завершённых заказов не бывает',
+    d:'<code>active=false</code> ищет <code>DELIVERED</code> и <code>CANCELED</code>, но в эти ' +
+      'статусы заказ никто не переводит: магазину разрешено максимум <code>READY</code>, ' +
+      'курьерской части и отмены в API нет. Список всегда пустой.' },
   { crit:true, t:'Вебхук оплаты ничем не защищён',
     d:'<code>/order/payment/webhook</code> — <code>permitAll</code> без подписи. Зная ' +
       '<code>paymentId</code>, оплату может подтвердить кто угодно (кнопка на этой странице ровно ' +
@@ -1176,10 +1216,128 @@ async function sendWebhook(status){
   note.innerHTML = '<span class="tag live">оплачено</span> заказ #' + pm.orderId +
     ' перешёл в <code>PENDING</code>, монолит отправил <code>POST /orders</code> партнёру на :8081. ' +
     'Дальше партнёр сам двигает статус: <code>ACCEPTED</code> → <code>PREPARING</code> → ' +
-    '<code>READY</code>. Увидеть это можно в <code>docker compose logs -f partner-store</code> ' +
-    'или в базе — ручки, чтобы покупатель прочитал свой оплаченный заказ, в API нет.';
+    '<code>READY</code>. Смотри вкладку <b>«Мои заказы»</b> — она сама перечитывает ' +
+    '<code>/order/placed</code> раз в 3 секунды.';
   toast('Заказ #' + pm.orderId + ' оплачен');
   await loadOrder();
+  await loadPlaced();
+}
+
+/* ============================================================
+   Мои заказы — GET /order/placed?active=
+   ============================================================ */
+const STATUS_CHAIN = ['PENDING','ACCEPTED','PREPARING','READY','DELIVERING','DELIVERED'];
+
+function statusKind(st){
+  if (st === 'CANCELED') return 'err';
+  if (st === 'DELIVERED' || st === 'READY') return 'live';
+  return 'demo';
+}
+
+async function loadPlaced(){
+  const el = document.getElementById('placedSrc');
+  if (!state.tokens.user){
+    state.placed = [];
+    badge(el, '', 'нужен токен user');
+    renderPlaced();
+    return;
+  }
+
+  const res = await api('GET', '/order/placed',
+    {role:'user', query:{active: state.placedActive}});
+
+  if (res.ok && Array.isArray(res.data)){
+    state.placed = res.data;
+    badge(el, 'live', 'backend · ' + res.data.length);
+    /* имена товаров бек в позициях не отдаёт — дотягиваем витрину каждого бренда один раз */
+    for (const brandId of new Set(res.data.map(o => o.brandId))){
+      if (!state.offers[brandId]) await loadOffers(brandId);
+    }
+  } else {
+    state.placed = [];
+    badge(el, 'err', res.status ? res.status + ': ' + (res.error||'') : 'нет связи');
+  }
+  renderPlaced();
+}
+
+/* цена в позиции появляется только на чекауте (снапшот), у активных заказов она уже есть */
+function nameOfProduct(brandId, productId){
+  const o = (state.offers[brandId] || []).find(x => x.productId === productId);
+  return o ? o.name : 'product #' + productId;
+}
+
+function renderPlaced(){
+  const box = document.getElementById('placedList');
+
+  if (!state.placed.length){
+    box.innerHTML = '<div class="muted small">' +
+      (state.tokens.user
+        ? (state.placedActive
+            ? 'Активных заказов нет. Оформи и оплати заказ на вкладке «Каталог».'
+            : 'Завершённых заказов нет. Сюда заказ попадёт только в статусе DELIVERED или ' +
+              'CANCELED, а довозить и отменять API пока не умеет — магазин доводит максимум до READY.')
+        : 'Войди как пользователь на вкладке «Аккаунты».') + '</div>';
+    return;
+  }
+
+  box.innerHTML = state.placed.map(o => {
+    let total = 0, guessed = false;
+
+    const items = (o.orderItems || []).map(it => {
+      let price = it.unitPrice != null ? Number(it.unitPrice) : null;
+      if (price == null){
+        const offer = (state.offers[o.brandId] || []).find(x => x.productId === it.productId);
+        price = offer ? Number(offer.unitPrice) : null;
+        if (price != null) guessed = true;
+      }
+      if (price != null) total += price * it.requestedQuantity;
+
+      return '<div class="citem"><div class="grow"><b class="small">' +
+        esc(nameOfProduct(o.brandId, it.productId)) + '</b>' +
+        '<div class="small muted">' +
+          (price == null ? 'цена неизвестна' : price.toFixed(2) + ' ₽') +
+          ' × ' + it.requestedQuantity + '</div></div></div>';
+    }).join('');
+
+    /* цепочку рисуем только для живого заказа: у отменённого её не было */
+    const chain = o.status === 'CANCELED' ? '' :
+      '<div class="small" style="margin:8px 0">' + STATUS_CHAIN.map(st => {
+        const passed = STATUS_CHAIN.indexOf(st) <= STATUS_CHAIN.indexOf(o.status);
+        return '<span class="' + (st === o.status ? 'ok' : (passed ? '' : 'muted')) + '">' +
+          (st === o.status ? '<b>' + st + '</b>' : st) + '</span>';
+      }).join('<span class="muted"> → </span>') + '</div>';
+
+    const paidAt = o.pendingAt ? new Date(o.pendingAt).toLocaleTimeString() : null;
+
+    return '<div class="card">' +
+      '<div class="row"><b>Заказ #' + o.id + '</b>' +
+        '<span class="tag ' + statusKind(o.status) + '">' + esc(o.status) + '</span>' +
+        '<div class="grow"></div>' +
+        '<span class="small muted">бренд ' + o.brandId + '</span></div>' +
+      (paidAt ? '<div class="small muted" style="margin-top:4px">оплачен в ' + paidAt + '</div>' : '') +
+      chain +
+      items +
+      '<div class="total"><span>Итого</span><span>' + total.toFixed(2) + ' ₽' +
+        (guessed ? ' <span class="tag demo">цена из витрины</span>' : '') + '</span></div>' +
+    '</div>';
+  }).join('');
+}
+
+function setPlacedFilter(active){
+  state.placedActive = active;
+  document.getElementById('poActive').classList.toggle('on', active);
+  document.getElementById('poDone').classList.toggle('on', !active);
+  loadPlaced();
+}
+
+/* пока вкладка открыта и стоит галка — раз в 3 секунды перечитываем список:
+   на демо видно, как partner-store сам двигает статус */
+function pollPlaced(on){
+  clearInterval(state.pollTimer);
+  state.pollTimer = null;
+  if (on && document.getElementById('poAuto').checked){
+    state.pollTimer = setInterval(loadPlaced, 3000);
+  }
 }
 
 /* ============================================================
@@ -1290,10 +1448,12 @@ async function changeOrderStatus(){
 function switchTab(name){
   document.querySelectorAll('#tabs button').forEach(b =>
     b.classList.toggle('on', b.dataset.tab===name));
-  ['catalog','accounts','brandcab','storecab','routes','gaps'].forEach(t =>
+  ['catalog','orders','accounts','brandcab','storecab','routes','gaps'].forEach(t =>
     document.getElementById('tab-'+t).classList.toggle('hide', t!==name));
   if (name==='brandcab'){ loadBrandStores(); loadBrandProducts(); }
   if (name==='storecab') loadStock();
+  if (name==='orders') loadPlaced();
+  pollPlaced(name==='orders');   /* таймер живёт только пока вкладка открыта */
 }
 
 /* ============================================================
@@ -1321,6 +1481,11 @@ function bind(){
   document.getElementById('reloadBrandStores').onclick = loadBrandStores;
   document.getElementById('reloadBrandProds').onclick = loadBrandProducts;
   document.getElementById('reloadOrder').onclick = loadOrder;
+  document.getElementById('reloadPlaced').onclick = loadPlaced;
+  document.getElementById('poActive').onclick = () => setPlacedFilter(true);
+  document.getElementById('poDone').onclick = () => setPlacedFilter(false);
+  document.getElementById('poAuto').onchange = () =>
+    pollPlaced(!document.getElementById('tab-orders').classList.contains('hide'));
   document.getElementById('probeRoutes').onclick = probeRoutes;
   document.getElementById('clearLog').onclick = () => document.getElementById('log').innerHTML='';
   document.getElementById('checkoutBtn').onclick = openCheckout;
@@ -1333,17 +1498,17 @@ function bind(){
     const res = await api('POST', '/user', {body:{
       phone: document.getElementById('uPhone').value,
       password: document.getElementById('uPass').value }});
-    if (res.ok){ setToken('user', res.data.token); toast('Пользователь зарегистрирован'); loadOrder(); }
+    if (res.ok){ setToken('user', res.data.token); toast('Пользователь зарегистрирован'); loadOrder(); loadPlaced(); }
     else toast('Регистрация: ' + res.error, 'bad');
   };
   document.getElementById('uLogin').onclick = async () => {
     const res = await api('POST', '/user/login', {body:{
       number: document.getElementById('uPhone').value,
       password: document.getElementById('uPass').value }});
-    if (res.ok){ setToken('user', res.data.token); toast('Вход выполнен'); loadOrder(); }
+    if (res.ok){ setToken('user', res.data.token); toast('Вход выполнен'); loadOrder(); loadPlaced(); }
     else toast('Вход: ' + res.error, 'bad');
   };
-  document.getElementById('uOut').onclick = () => { setToken('user', null); loadOrder(); };
+  document.getElementById('uOut').onclick = () => { setToken('user', null); loadOrder(); loadPlaced(); };
 
   /* --- brand --- */
   document.getElementById('bReg').onclick = async () => {

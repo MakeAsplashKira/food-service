@@ -25,11 +25,6 @@ public class StoreServiceExceptionHandler {
         return responseBuilder.unauthorized(e.getMessage());
     }
 
-    @ExceptionHandler(NoSuchRestaurantException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNoSuchRestaurant(NoSuchRestaurantException e) {
-        return responseBuilder.notFound(e.getMessage());
-    }
-
     @ExceptionHandler(NoSuchProductException.class)
     public ResponseEntity<ApiResponse<Void>> handleNoSuchMenuItem(NoSuchProductException e) {
         return responseBuilder.notFound(e.getMessage());
@@ -38,11 +33,6 @@ public class StoreServiceExceptionHandler {
     @ExceptionHandler(SomeMenuItemsMissingException.class)
     public ResponseEntity<ApiResponse<Void>> handleSomeMenuItemsMissing(SomeMenuItemsMissingException e) {
         return responseBuilder.badRequest(e.getMessage());
-    }
-
-    @ExceptionHandler(NotEnoughMenuItemQuantityException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotEnoughMenuItemQuantity(NotEnoughMenuItemQuantityException e) {
-        return responseBuilder.conflict(e.getMessage());
     }
 
     @ExceptionHandler(StockExistsException.class)
@@ -58,5 +48,10 @@ public class StoreServiceExceptionHandler {
     @ExceptionHandler(StoreNotFoundByBrandException.class)
     public ResponseEntity<ApiResponse<Void>> handleStoreNotFoundByBrand(StoreNotFoundByBrandException e) {
         return responseBuilder.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(StoreNotEnoughStock.class)
+    public ResponseEntity<ApiResponse<Void>> handleStoreNotEnoughStock(StoreNotEnoughStock e) {
+        return responseBuilder.conflict(e.getMessage());
     }
 }

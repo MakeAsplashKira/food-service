@@ -10,6 +10,8 @@ import com.example.foodservice.orderservice.dto.CheckoutDTO.ViewCheckoutResponse
 import com.example.foodservice.orderservice.dto.CheckoutDTO.GetCheckoutCommand;
 import com.example.foodservice.orderservice.dto.OrderDTO;
 import com.example.foodservice.orderservice.dto.OrderDTO.GetOrderCommand;
+import com.example.foodservice.orderservice.dto.OrderDTO.GetUserOrdersCommand;
+import com.example.foodservice.orderservice.dto.OrderDTO.UserOrdersResponse;
 import com.example.foodservice.orderservice.dto.OrderInfo;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.UpdateItemQuantityCommand;
 import com.example.foodservice.orderservice.dto.OrderItemQuantityDTO.SetItemQuantityRequest;
@@ -24,6 +26,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/order")
@@ -117,6 +121,16 @@ public class OrderController {
         return responseBuilder.ok(null);
     }
 
+    @Validated
+    @GetMapping("/placed")
+    public ResponseEntity<ApiResponse<List<UserOrdersResponse>>> getUserOrders(
+            @RequestParam boolean active,
+            @AuthenticationPrincipal UserPrincipal userPrincipal){
+
+        List<OrderInfo> orderInfo = orderService.getUserOrders(GetUserOrdersCommand.from(userPrincipal.userId(), active));
+
+        return responseBuilder.ok(orderInfo.stream().map(UserOrdersResponse::from).toList());
+    }
 
 
 }

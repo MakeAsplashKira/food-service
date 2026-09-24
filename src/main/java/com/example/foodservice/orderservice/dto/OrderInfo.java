@@ -10,14 +10,16 @@ public record OrderInfo(
         Long id,
         Long brandId,
         List<OrderItemInfo> orderItems,
-        OrderStatus status
+        OrderStatus status,
+        Instant pendingAt
 ) {
     public static OrderInfo from(Order order) {
         return new OrderInfo(
                 order.getId(),
                 order.getBrandId(),
                 order.getOrderItems().stream().map(OrderItemInfo::from).toList(),
-                order.getStatus()
+                order.getStatus(),
+                order.getPendingAt()
         );
     }
 }

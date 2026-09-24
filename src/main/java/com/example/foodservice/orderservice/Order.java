@@ -14,6 +14,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "orders")
@@ -174,6 +177,10 @@ public class Order {
         }
         this.status = newStatus;
 
+    }
+
+    public Map<Long, Integer> getProductsToReserve() {
+        return this.orderItems.stream().collect(Collectors.toMap(OrderItem::getProductId, OrderItem::getRequestedQuantity));
     }
 }
 
